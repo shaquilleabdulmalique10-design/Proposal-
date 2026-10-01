@@ -1,4 +1,7 @@
 const STORAGE_PREFIX = "love-note-v1";
+
+// Hide all panels immediately — showPanel() reveals the correct one after routing
+document.querySelectorAll(".panel").forEach(p => p.style.display = "none");
 const SPOTIFY_FALLBACK_PLAYLIST_ID = "6D49SvtyT9sW3XCmP8fWAY";
 const SPOTIFY_EMBED_SRC = `https://open.spotify.com/embed/playlist/${SPOTIFY_FALLBACK_PLAYLIST_ID}?utm_source=generator&theme=0`;
 
@@ -800,17 +803,23 @@ async function initReceiverFlow() {
 
   showPanel("receiverSection");
 
-  // ── Spotify autoplay ───────────────────────────────────────────────────────
-  // src is set AFTER showPanel so the iframe is in a visible (rendered) element.
-  // Browsers require a user gesture before playing audio — on the very first
-  // touch/click anywhere on the page we reload the src, which counts as a
-  // gesture-triggered load and starts playback.
+  // ── Spotify autoplay ──────────────────────────────────────────────────────
+  // Set src on first user interaction (touch/click/scroll) — this satisfies
+  // the browser's autoplay policy and starts the music immediately.
   const iframe = document.getElementById("spotifyPlayerInline");
   if (iframe) {
-    document.addEventListener("pointerdown", function playOnFirstTouch() {
-      document.removeEventListener("pointerdown", playOnFirstTouch);
+    let played = false;
+    function playOnFirstInteraction() {
+      if (played) return;
+      played = true;
       iframe.src = autoplayUrl;
-    }, { once: true });
+      document.removeEventListener("pointerdown", playOnFirstInteraction);
+      document.removeEventListener("touchstart", playOnFirstInteraction);
+      document.removeEventListener("scroll", playOnFirstInteraction);
+    }
+    document.addEventListener("pointerdown", playOnFirstInteraction);
+    document.addEventListener("touchstart", playOnFirstInteraction);
+    document.addEventListener("scroll", playOnFirstInteraction);
   }
 } // end initReceiverFlow
 
@@ -869,16 +878,6 @@ function initSparkleEffects() {
 async function initApp() {
   const audio = document.getElementById("backgroundAudio");
   initSparkleEffects();
-
-  document.addEventListener(
-    "pointerdown",
-    () => {
-      if (audio && audio.src) {
-        audio.play().catch(() => {});
-      }
-    },
-    { once: true },
-  );
 
   // ── Handle Spotify OAuth callback ─────────────────────────────────────────
   const urlParams = new URLSearchParams(window.location.search);
