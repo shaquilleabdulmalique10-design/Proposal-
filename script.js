@@ -3,7 +3,7 @@ const SPOTIFY_FALLBACK_PLAYLIST_ID = "6D49SvtyT9sW3XCmP8fWAY";
 const SPOTIFY_EMBED_SRC = `https://open.spotify.com/embed/playlist/${SPOTIFY_FALLBACK_PLAYLIST_ID}?utm_source=generator&theme=0`;
 
 // ── Spotify OAuth (PKCE) ──────────────────────────────────────────────────────
-const SPOTIFY_CLIENT_ID = "spak_l4xgKUZqwXom1pAiUnTWaWUC7jI3exDX";
+const SPOTIFY_CLIENT_ID = "46f32d141ffa433ca3d9931c1e7c6fe3";
 const SPOTIFY_REDIRECT_URI = `${window.location.origin}/`;
 const SPOTIFY_SCOPES = "playlist-read-private playlist-read-collaborative";
 const SPOTIFY_TOKEN_KEY = "spotify_access_token";
