@@ -464,12 +464,17 @@ async function initSenderFlow() {
       promptSection.classList.remove("hidden");
       customSection.classList.remove("hidden");
       songSection.classList.remove("hidden");
-      document.getElementById("imageSection").classList.remove("hidden");
       generateLinkBtn.classList.remove("hidden");
     });
   });
 
   renderPrompts(selectedGender);
+
+  // Show all sections immediately since female is pre-selected
+  promptSection.classList.remove("hidden");
+  customSection.classList.remove("hidden");
+  songSection.classList.remove("hidden");
+  generateLinkBtn.classList.remove("hidden");
 
   // ── Generate link ──────────────────────────────────────────────────────────
   generateLinkBtn.addEventListener("click", async () => {
@@ -769,8 +774,6 @@ async function initReceiverFlow() {
       thankYouModal.classList.remove("hidden");
       thankYouModal.classList.add("showing");
 
-      // Replace browser history so the receiver can't reopen with token
-      // Remove token and owner params for receiver by replacing URL to a generic path
       try {
         window.history.replaceState(
           {},
@@ -780,9 +783,10 @@ async function initReceiverFlow() {
       } catch (e) {
         // ignore
       }
+    }); // end dateForm submit
 
   showPanel("receiverSection");
-}
+} // end initReceiverFlow
 
 async function initSenderResponseViewer() {
   const token = getTokenFromUrl();
