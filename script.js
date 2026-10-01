@@ -772,24 +772,17 @@ async function initReceiverFlow() {
 
   showPanel("receiverSection");
 
-  // ── Spotify autoplay — src set AFTER panel is visible so browser loads it ─
+  // ── Spotify autoplay ───────────────────────────────────────────────────────
+  // src is set AFTER showPanel so the iframe is in a visible (rendered) element.
+  // Browsers require a user gesture before playing audio — on the very first
+  // touch/click anywhere on the page we reload the src, which counts as a
+  // gesture-triggered load and starts playback.
   const iframe = document.getElementById("spotifyPlayerInline");
   if (iframe) {
-    // Set src now that the section is displayed (not display:none)
-    iframe.src = autoplayUrl;
-
-    // Browsers block autoplay until a user gesture — on first tap, reload the
-    // src to satisfy the gesture requirement and kick off playback
-    let nudged = false;
-    const nudgeAutoplay = () => {
-      if (!nudged) {
-        nudged = true;
-        iframe.src = "";
-        requestAnimationFrame(() => { iframe.src = autoplayUrl; });
-      }
-      document.removeEventListener("pointerdown", nudgeAutoplay);
-    };
-    document.addEventListener("pointerdown", nudgeAutoplay, { once: true });
+    document.addEventListener("pointerdown", function playOnFirstTouch() {
+      document.removeEventListener("pointerdown", playOnFirstTouch);
+      iframe.src = autoplayUrl;
+    }, { once: true });
   }
 } // end initReceiverFlow
 
@@ -881,13 +874,38 @@ async function initApp() {
   // ─────────────────────────────────────────────────────────────────────────
 
   const token = getTokenFromUrl();
+  const ownerParam = getOwnerFromUrl();
 
   if (token) {
     const savedData = await fetchProposalFromBackend(token);
+
     if (savedData && savedData.response) {
-      initSenderResponseViewer();
+      // Response exists — only the sender (owner link) sees the result page
+      if (ownerParam && ownerParam === savedData.ownerToken) {
+        initSenderResponseViewer();
+        return;
+      }
+      // Receiver or anyone else opening the share link after it was answered
+      // sees the sealed screen — they already submitted
+      document.body.innerHTML = `
+        <div style="
+          min-height:100vh;display:flex;flex-direction:column;
+          align-items:center;justify-content:center;
+          font-family:'Inter',sans-serif;
+          background:linear-gradient(160deg,#1a0a0f 0%,#3d1a2e 45%,#1f0d1a 100%);
+          color:#fde8f0;text-align:center;padding:32px;gap:16px;">
+          <div style="font-size:3rem;">💖</div>
+          <h2 style="font-family:'Cormorant Garamond',serif;font-size:2.6rem;margin:0;color:#fde8f0;">
+            This moment is sealed
+          </h2>
+          <p style="color:rgba(253,232,240,0.65);max-width:340px;line-height:1.8;margin:0;font-size:0.95rem;">
+            This invitation has already been answered. Something beautiful is in the works.
+          </p>
+        </div>`;
       return;
     }
+
+    // No response yet — show the receiver's proposal page
     initReceiverFlow();
     return;
   }
