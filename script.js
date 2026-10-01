@@ -809,10 +809,23 @@ async function initReceiverFlow() {
   const iframe = document.getElementById("spotifyPlayerInline");
   if (iframe) {
     let played = false;
+    const fallbackUrl = `https://open.spotify.com/embed/playlist/37i9dQZF1DX3Z99viCDp7Q?utm_source=generator&theme=0&autoplay=1`;
+
     function playOnFirstInteraction() {
       if (played) return;
       played = true;
       iframe.src = autoplayUrl;
+      // If the chosen playlist fails, fall back to the working one after 4s
+      setTimeout(() => {
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow?.document;
+          if (doc && doc.title && doc.title.toLowerCase().includes("not found")) {
+            iframe.src = fallbackUrl;
+          }
+        } catch (e) {
+          // cross-origin — can't read, assume it's fine
+        }
+      }, 4000);
       document.removeEventListener("pointerdown", playOnFirstInteraction);
       document.removeEventListener("touchstart", playOnFirstInteraction);
       document.removeEventListener("scroll", playOnFirstInteraction);
