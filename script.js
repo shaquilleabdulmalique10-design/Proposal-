@@ -2,7 +2,7 @@ const STORAGE_PREFIX = "love-note-v1";
 
 // Hide all panels immediately — showPanel() reveals the correct one after routing
 document.querySelectorAll(".panel").forEach(p => p.style.display = "none");
-const SPOTIFY_FALLBACK_PLAYLIST_ID = "6D49SvtyT9sW3XCmP8fWAY";
+const SPOTIFY_FALLBACK_PLAYLIST_ID = "37i9dQZF1DX3Z99viCDp7Q";
 const SPOTIFY_EMBED_SRC = `https://open.spotify.com/embed/playlist/${SPOTIFY_FALLBACK_PLAYLIST_ID}?utm_source=generator&theme=0`;
 
 // ── Spotify OAuth (PKCE) ──────────────────────────────────────────────────────
