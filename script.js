@@ -1,0 +1,856 @@
+const STORAGE_PREFIX = "love-note-v1";
+const SPOTIFY_FALLBACK_PLAYLIST_ID = "6D49SvtyT9sW3XCmP8fWAY";
+const SPOTIFY_EMBED_SRC = `https://open.spotify.com/embed/playlist/${SPOTIFY_FALLBACK_PLAYLIST_ID}?utm_source=generator&theme=0`;
+
+// ── Spotify OAuth (PKCE) ──────────────────────────────────────────────────────
+const SPOTIFY_CLIENT_ID = "spak_l4xgKUZqwXom1pAiUnTWaWUC7jI3exDX";
+const SPOTIFY_REDIRECT_URI = `${window.location.origin}/`;
+const SPOTIFY_SCOPES = "playlist-read-private playlist-read-collaborative";
+const SPOTIFY_TOKEN_KEY = "spotify_access_token";
+const SPOTIFY_VERIFIER_KEY = "spotify_pkce_verifier";
+
+function generateRandomString(length) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  return Array.from(array, (b) => chars[b % chars.length]).join("");
+}
+
+async function generateCodeChallenge(verifier) {
+  const data = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+async function startSpotifyLogin() {
+  const verifier = generateRandomString(64);
+  const challenge = await generateCodeChallenge(verifier);
+  sessionStorage.setItem(SPOTIFY_VERIFIER_KEY, verifier);
+
+  const params = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    response_type: "code",
+    redirect_uri: SPOTIFY_REDIRECT_URI,
+    scope: SPOTIFY_SCOPES,
+    code_challenge_method: "S256",
+    code_challenge: challenge,
+  });
+
+  window.location.href = `https://accounts.spotify.com/authorize?${params}`;
+}
+
+async function exchangeSpotifyCode(code) {
+  const verifier = sessionStorage.getItem(SPOTIFY_VERIFIER_KEY);
+  if (!verifier) return null;
+
+  const body = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    grant_type: "authorization_code",
+    code,
+    redirect_uri: SPOTIFY_REDIRECT_URI,
+    code_verifier: verifier,
+  });
+
+  try {
+    const res = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+    const data = await res.json();
+    if (data.access_token) {
+      sessionStorage.setItem(SPOTIFY_TOKEN_KEY, data.access_token);
+      sessionStorage.removeItem(SPOTIFY_VERIFIER_KEY);
+      // Clean up the URL
+      window.history.replaceState({}, "", window.location.pathname);
+      return data.access_token;
+    }
+  } catch (err) {
+    console.warn("Spotify token exchange failed", err);
+  }
+  return null;
+}
+
+function getSpotifyToken() {
+  return sessionStorage.getItem(SPOTIFY_TOKEN_KEY);
+}
+
+async function fetchSpotifyPlaylists(accessToken) {
+  try {
+    const res = await fetch("https://api.spotify.com/v1/me/playlists?limit=50", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.items || [];
+  } catch (err) {
+    console.warn("Failed to fetch Spotify playlists", err);
+    return null;
+  }
+}
+
+function buildSpotifyEmbedUrl(playlistId) {
+  return `https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&theme=0`;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SONG_OPTIONS = [
+  {
+    label: "Love Playlist - Spotify",
+    url: SPOTIFY_EMBED_SRC,
+  },
+];
+
+const PROMPT_BANK = {
+  male: [
+    "Hey handsome, would you go on a date with me?",
+    "Can I take you out for a lovely dinner sometime?",
+    "I'd love to spend a cozy evening with you. Will you go out with me?",
+    "You make my heart smile. Would you let me take you out?",
+  ],
+  female: [
+    "Hey beautiful, would you go on a date with me?",
+    "I’d love to take you out for a sweet evening. Will you come with me?",
+    "You’ve been on my mind a lot, and I’d love to take you out sometime.",
+    "Can I steal a little time with you for a date?",
+  ],
+};
+
+const APPRECIATION_MESSAGES = [
+  "Aww, this made my whole heart smile. I can already picture us sharing the sweetest memories together.",
+  "You just made my whole day brighter. I’m already counting down the minutes until we get to spend time together.",
+  "This is honestly the best kind of surprise. I’m so happy and excited to make beautiful memories with you.",
+  "You’ve made this moment feel extra special, and I’m smiling like a fool just thinking about it.",
+  "This is exactly the kind of joy I wanted to feel today. I can’t wait for our time together.",
+  "My heart is so full right now. You’ve made me feel unbelievably lucky, and I’m excited for what’s ahead.",
+];
+
+const FALLBACK_IMAGE = "image/love1.jpeg";
+
+function getTokenFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("token");
+}
+
+function buildShareUrl(token) {
+  const baseUrl = window.location.origin + window.location.pathname;
+  return `${baseUrl}?token=${token}`;
+}
+
+function buildOwnerUrl(token, ownerToken) {
+  const baseUrl = window.location.origin + window.location.pathname;
+  return `${baseUrl}?token=${token}&owner=${ownerToken}`;
+}
+
+function getStorageKeyForToken(token) {
+  return `${STORAGE_PREFIX}:${token}`;
+}
+
+function formatDate(dateValue) {
+  if (!dateValue) return "your chosen date";
+  const parsedDate = new Date(`${dateValue}T00:00:00`);
+  return parsedDate.toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatTime(timeValue) {
+  if (!timeValue) return "the time you picked";
+  const [hours, minutes] = timeValue.split(":").map(Number);
+  const formatted = new Date();
+  formatted.setHours(hours, minutes, 0, 0);
+  return formatted.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function resolveImageSource(imageValue) {
+  if (!imageValue) return FALLBACK_IMAGE;
+  return imageValue.startsWith("data:") ? imageValue : `image/${imageValue}`;
+}
+
+function setBackgroundImage(targetElement, imageValue) {
+  if (!targetElement) return;
+  const imageUrl = resolveImageSource(imageValue);
+  targetElement.style.backgroundImage = `url('${imageUrl}')`;
+}
+
+function getSongMeta(songLabelOrUrl) {
+  if (!songLabelOrUrl) return SONG_OPTIONS[0];
+  const byLabel = SONG_OPTIONS.find(
+    (option) => option.label === songLabelOrUrl,
+  );
+  if (byLabel) return byLabel;
+  // If the caller passed a URL directly, return it as a meta object
+  if (typeof songLabelOrUrl === "string" && songLabelOrUrl.startsWith("http")) {
+    return { label: songLabelOrUrl, url: songLabelOrUrl };
+  }
+  return SONG_OPTIONS[0];
+}
+
+function playBackgroundSong(songLabel) {
+  const iframe = document.getElementById("spotifyPlayerInline");
+  const audio = document.getElementById("backgroundAudio");
+  const songMeta = getSongMeta(songLabel);
+
+  if (
+    iframe &&
+    songMeta.url &&
+    songMeta.url.includes("spotify.com/embed/playlist/")
+  ) {
+    iframe.src = songMeta.url;
+    iframe.classList.remove("hidden");
+    return;
+  }
+
+  if (!audio) return;
+  audio.src = songMeta.url;
+  audio.loop = true;
+  audio.volume = 0.45;
+  audio.play().catch(() => {
+    window.addEventListener("pointerdown", () => audio.play().catch(() => {}), {
+      once: true,
+    });
+  });
+}
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+
+  toast.innerHTML = message;
+  toast.classList.add("visible");
+
+  window.clearTimeout(showToast.timeoutId);
+  showToast.timeoutId = window.setTimeout(() => {
+    toast.classList.remove("visible");
+  }, 5000);
+}
+
+function saveProposalData(token, payload) {
+  localStorage.setItem(getStorageKeyForToken(token), JSON.stringify(payload));
+}
+
+function readProposalData(token) {
+  const raw = localStorage.getItem(getStorageKeyForToken(token));
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    return null;
+  }
+}
+
+function showPanel(panelId) {
+  document.querySelectorAll(".panel").forEach((panel) => {
+    panel.classList.toggle("active", panel.id === panelId);
+    panel.classList.toggle("hidden", panel.id !== panelId);
+  });
+}
+
+async function createProposalInBackend(payload) {
+  try {
+    const response = await fetch("/api/proposal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error("Server rejected proposal");
+    }
+
+    return await response.json();
+  } catch (error) {
+    return null;
+  }
+}
+
+async function fetchProposalFromBackend(token) {
+  try {
+    const response = await fetch(`/api/proposal/${encodeURIComponent(token)}`);
+    if (!response.ok) {
+      return readProposalData(token);
+    }
+
+    const data = await response.json();
+    if (data && data.token) {
+      saveProposalData(data.token, data);
+      return data;
+    }
+  } catch (error) {
+    console.warn("Backend fetch failed, using local storage fallback.", error);
+  }
+
+  return readProposalData(token);
+}
+
+async function submitResponseToBackend(token, response) {
+  try {
+    const responseFromServer = await fetch(
+      `/api/proposal/${encodeURIComponent(token)}/response`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(response),
+      },
+    );
+
+    return responseFromServer.ok;
+  } catch (error) {
+    console.warn("Response submission to backend failed.", error);
+    return false;
+  }
+}
+
+function createFloatingHeart(x, y) {
+  const heart = document.createElement("span");
+  heart.className = "floating-heart";
+  heart.textContent = "❤";
+  heart.style.left = `${x}px`;
+  heart.style.top = `${y}px`;
+  document.body.appendChild(heart);
+
+  window.setTimeout(() => heart.remove(), 1800);
+}
+
+function createSparkleTrail(event) {
+  const sparkle = document.createElement("span");
+  sparkle.className = "sparkle-trail";
+  sparkle.style.left = `${event.clientX}px`;
+  sparkle.style.top = `${event.clientY}px`;
+  document.body.appendChild(sparkle);
+
+  window.setTimeout(() => sparkle.remove(), 700);
+}
+
+async function initSenderFlow() {
+  const setupSection = document.getElementById("setupSection");
+  const promptSection = document.getElementById("promptSection");
+  const promptList = document.getElementById("promptList");
+  const generateLinkBtn = document.getElementById("generateLinkBtn");
+  const shareBox = document.getElementById("shareBox");
+  const customSection = document.getElementById("customSection");
+  const shareLinkInput = document.getElementById("shareLink");
+  const customMessage = document.getElementById("customMessage");
+  const songSection = document.getElementById("songSection");
+  const imageSelect = document.getElementById("imageSelect");
+  const photoUpload = document.getElementById("photoUpload");
+
+  let selectedGender = "female";
+  let selectedPrompt = PROMPT_BANK.female[0];
+  let uploadedImageData = "";
+
+  // ── Spotify playlist picker state ─────────────────────────────────────────
+  let selectedPlaylistId = SPOTIFY_FALLBACK_PLAYLIST_ID;
+  let selectedPlaylistName = "Love Playlist";
+  let selectedPlaylistEmbedUrl = SPOTIFY_EMBED_SRC;
+
+  // Replace the plain <select> in songSection with a Spotify connect UI
+  songSection.innerHTML = `
+    <label>Pick a playlist</label>
+    <div id="spotifyConnectWrap">
+      <button id="spotifyConnectBtn" class="spotify-connect-btn" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.516 17.293a.75.75 0 01-1.032.244c-2.827-1.727-6.39-2.118-10.59-1.16a.75.75 0 11-.334-1.463c4.593-1.048 8.537-.597 11.712 1.347a.75.75 0 01.244 1.032zm1.472-3.27a.937.937 0 01-1.29.308c-3.233-1.988-8.163-2.563-11.99-1.403a.938.938 0 01-.543-1.794c4.37-1.325 9.8-.682 13.515 1.599a.937.937 0 01.308 1.29zm.127-3.405C15.28 8.46 9.205 8.25 5.857 9.28a1.125 1.125 0 11-.652-2.154c3.89-1.177 10.355-.95 14.437 1.618a1.125 1.125 0 01-1.127 1.875z"/></svg>
+        Connect Spotify to browse playlists
+      </button>
+    </div>
+    <div id="playlistPickerWrap" class="playlist-picker-wrap hidden">
+      <div id="playlistGrid" class="playlist-grid"></div>
+      <p id="selectedPlaylistLabel" class="selected-playlist-label"></p>
+    </div>
+    <div id="spotifyPreviewWrap" class="spotify-preview-wrap hidden">
+      <iframe id="spotifyPlayerPreview"
+        title="Spotify playlist preview"
+        src=""
+        width="100%" height="152" frameborder="0"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy"
+        style="border-radius:14px;margin-top:10px;"></iframe>
+    </div>
+  `;
+
+  // Connect button
+  document.getElementById("spotifyConnectBtn").addEventListener("click", () => {
+    startSpotifyLogin();
+  });
+
+  // If we already have a token (returned from OAuth redirect), load playlists
+  const spotifyToken = getSpotifyToken();
+  if (spotifyToken) {
+    await loadAndRenderPlaylists(spotifyToken);
+  }
+
+  function renderPlaylistPicker(playlists) {
+    const wrap = document.getElementById("playlistPickerWrap");
+    const grid = document.getElementById("playlistGrid");
+    const connectWrap = document.getElementById("spotifyConnectWrap");
+
+    connectWrap.classList.add("hidden");
+    wrap.classList.remove("hidden");
+    grid.innerHTML = "";
+
+    playlists.forEach((pl) => {
+      const img = pl.images && pl.images[0] ? pl.images[0].url : "";
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "playlist-card";
+      if (pl.id === selectedPlaylistId) card.classList.add("selected");
+      card.dataset.id = pl.id;
+      card.dataset.name = pl.name;
+      card.innerHTML = `
+        ${img ? `<img src="${img}" alt="${pl.name}" loading="lazy" />` : '<div class="playlist-card-placeholder">🎵</div>'}
+        <span>${pl.name}</span>
+      `;
+      card.addEventListener("click", () => {
+        grid.querySelectorAll(".playlist-card").forEach((c) => c.classList.remove("selected"));
+        card.classList.add("selected");
+        selectedPlaylistId = pl.id;
+        selectedPlaylistName = pl.name;
+        selectedPlaylistEmbedUrl = buildSpotifyEmbedUrl(pl.id);
+
+        document.getElementById("selectedPlaylistLabel").textContent =
+          `Selected: ${pl.name}`;
+
+        // Show mini preview
+        const previewWrap = document.getElementById("spotifyPreviewWrap");
+        const previewIframe = document.getElementById("spotifyPlayerPreview");
+        previewIframe.src = selectedPlaylistEmbedUrl;
+        previewWrap.classList.remove("hidden");
+      });
+      grid.appendChild(card);
+    });
+
+    // Show current selection label
+    document.getElementById("selectedPlaylistLabel").textContent =
+      `Selected: ${selectedPlaylistName}`;
+  }
+
+  async function loadAndRenderPlaylists(token) {
+    const connectBtn = document.getElementById("spotifyConnectBtn");
+    if (connectBtn) connectBtn.textContent = "Loading your playlists…";
+
+    const playlists = await fetchSpotifyPlaylists(token);
+    if (!playlists) {
+      if (connectBtn) {
+        connectBtn.textContent = "Connect Spotify to browse playlists";
+        connectBtn.disabled = false;
+      }
+      showToast("Could not load playlists. Try reconnecting Spotify.");
+      return;
+    }
+    renderPlaylistPicker(playlists);
+  }
+
+  // ── Photo upload ───────────────────────────────────────────────────────────
+  photoUpload.addEventListener("change", (event) => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) { uploadedImageData = ""; return; }
+    const reader = new FileReader();
+    reader.onload = (e) => { uploadedImageData = e.target.result; };
+    reader.readAsDataURL(file);
+  });
+
+  // ── Prompt rendering ───────────────────────────────────────────────────────
+  function renderPrompts(gender) {
+    promptList.innerHTML = "";
+    PROMPT_BANK[gender].forEach((prompt) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "prompt-card";
+      if (prompt === selectedPrompt) button.classList.add("selected");
+      button.textContent = prompt;
+      button.addEventListener("click", () => {
+        selectedPrompt = prompt;
+        renderPrompts(selectedGender);
+      });
+      promptList.appendChild(button);
+    });
+  }
+
+  document.querySelectorAll(".choice-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll(".choice-btn").forEach((btn) => btn.classList.remove("selected"));
+      button.classList.add("selected");
+      selectedGender = button.dataset.gender;
+      selectedPrompt = PROMPT_BANK[selectedGender][0];
+      renderPrompts(selectedGender);
+      promptSection.classList.remove("hidden");
+      customSection.classList.remove("hidden");
+      songSection.classList.remove("hidden");
+      document.getElementById("imageSection").classList.remove("hidden");
+      generateLinkBtn.classList.remove("hidden");
+    });
+  });
+
+  renderPrompts(selectedGender);
+
+  // ── Generate link ──────────────────────────────────────────────────────────
+  generateLinkBtn.addEventListener("click", async () => {
+    const message = customMessage.value.trim() || selectedPrompt;
+    const chosenImage = uploadedImageData || imageSelect.value;
+    const ownerToken = `owner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const payload = {
+      gender: selectedGender,
+      prompt: message,
+      song: selectedPlaylistName,
+      songUrl: selectedPlaylistEmbedUrl,
+      image: chosenImage,
+      createdAt: new Date().toISOString(),
+      ownerToken,
+    };
+
+    const backendResult = await createProposalInBackend(payload);
+
+    const token =
+      backendResult && backendResult.token
+        ? backendResult.token
+        : `proposal-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const returnedOwner =
+      backendResult && backendResult.ownerToken
+        ? backendResult.ownerToken
+        : ownerToken;
+
+    saveProposalData(token, { ...payload, token, ownerToken: returnedOwner });
+
+    const shareUrl =
+      backendResult && backendResult.url
+        ? backendResult.url
+        : buildShareUrl(token);
+    const ownerUrl = buildOwnerUrl(token, returnedOwner);
+
+    shareLinkInput.value = shareUrl;
+    document.getElementById("ownerLink").value = ownerUrl;
+    shareBox.classList.remove("hidden");
+    document.getElementById("ownerBox").classList.remove("hidden");
+
+    const copyOwnerBtn = document.getElementById("copyOwnerBtn");
+    if (copyOwnerBtn) {
+      copyOwnerBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(ownerUrl);
+          showToast("Owner link copied. Keep it private.");
+        } catch (err) {
+          const ownerInput = document.getElementById("ownerLink");
+          if (ownerInput) { ownerInput.select(); document.execCommand("copy"); }
+          showToast("Owner link copied. Keep it private.");
+        }
+      };
+    }
+
+    const copyBtn = document.getElementById("copyLinkBtn");
+    copyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast("Link copied. Send it to your crush 💌");
+      } catch (error) {
+        shareLinkInput.select();
+        document.execCommand("copy");
+        showToast("Link copied. Send it to your crush 💌");
+      }
+    };
+
+    window.history.replaceState({}, "", shareUrl);
+    setupSection.classList.add("is-shared");
+    showToast("Your proposal link is ready.");
+  });
+}
+
+// helper: check owner param
+function getOwnerFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("owner");
+}
+
+async function initReceiverFlow() {
+  const token = getTokenFromUrl();
+  if (!token) return;
+
+  const receiverSection = document.getElementById("receiverSection");
+  const receiverPrompt = document.getElementById("receiverPrompt");
+  const receiverMessage = document.getElementById("receiverMessage");
+  const successMessage = document.getElementById("successMessage");
+  const receiverEyebrow = document.getElementById("receiverEyebrow");
+  const thankYouText = document.getElementById("thankYouText");
+  const thankYouModal = document.getElementById("thankYouModal");
+  const closeThankYouBtn = document.getElementById("closeThankYouBtn");
+
+  closeThankYouBtn.addEventListener("click", () => {
+    thankYouModal.classList.add("hidden");
+  });
+
+  thankYouModal.addEventListener("click", (event) => {
+    if (event.target === thankYouModal) {
+      thankYouModal.classList.add("hidden");
+    }
+  });
+
+  const proposal = await fetchProposalFromBackend(token);
+  if (!proposal) {
+    receiverPrompt.textContent = "This link has expired or is invalid.";
+    receiverMessage.textContent =
+      "Please ask for a fresh invitation from the sender.";
+    setBackgroundImage(receiverSection, "love1.jpeg");
+    showPanel("receiverSection");
+    return;
+  }
+
+  setBackgroundImage(receiverSection, proposal.image || "love1.jpeg");
+  document.body.style.backgroundImage = `url('${resolveImageSource(proposal.image || "love1.jpeg")}')`;
+
+  receiverEyebrow.textContent =
+    proposal.gender === "male" ? "For him" : "For her";
+  receiverPrompt.textContent = proposal.prompt;
+  receiverMessage.textContent = proposal.prompt;
+
+  // attempt autoplay of the playlist for receiver
+  const preferredSongUrl = proposal.songUrl || SPOTIFY_EMBED_SRC;
+  if (preferredSongUrl) {
+    const iframe = document.getElementById("spotifyPlayerInline");
+    if (iframe) {
+      iframe.src = preferredSongUrl;
+      iframe.classList.remove("hidden");
+      // Some browsers block autoplay; try to play an audio element fallback
+      const audio = document.getElementById("backgroundAudio");
+      if (
+        audio &&
+        preferredSongUrl &&
+        !preferredSongUrl.includes("spotify.com/embed/playlist/")
+      ) {
+        audio.src = preferredSongUrl;
+        audio.loop = true;
+        audio.volume = 0.45;
+        audio.play().catch(() => {});
+      }
+    }
+  }
+
+  const yesBtn = document.querySelector(".yes-btn");
+  const noBtn = document.querySelector(".no-btn");
+  const zone = document.querySelector(".button-zone");
+
+  function moveNoButton() {
+    if (!zone || !noBtn) return;
+    const zoneRect = zone.getBoundingClientRect();
+    const buttonRect = noBtn.getBoundingClientRect();
+    const padding = 18;
+    const maxX = Math.max(0, zoneRect.width - buttonRect.width - padding * 2);
+    const maxY = Math.max(0, zoneRect.height - buttonRect.height - padding * 2);
+
+    noBtn.style.left = `${Math.random() * maxX + padding}px`;
+    noBtn.style.top = `${Math.random() * maxY + padding}px`;
+    noBtn.style.right = "auto";
+    noBtn.style.transform = "none";
+  }
+
+  noBtn.addEventListener("mouseenter", moveNoButton);
+  noBtn.addEventListener("mouseover", moveNoButton);
+  noBtn.addEventListener("pointerenter", moveNoButton);
+  noBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    noBtn.textContent = "Nice try 😏";
+    moveNoButton();
+  });
+
+  document.addEventListener("pointermove", (event) => {
+    const buttonRect = noBtn.getBoundingClientRect();
+    const centerX = buttonRect.left + buttonRect.width / 2;
+    const centerY = buttonRect.top + buttonRect.height / 2;
+    const distance = Math.hypot(
+      event.clientX - centerX,
+      event.clientY - centerY,
+    );
+    if (distance < 120) moveNoButton();
+  });
+
+  yesBtn.addEventListener("click", () => {
+    // if already responded, do nothing
+    if (proposal.response && proposal.response.submittedAt) {
+      showToast("This invitation has already been answered.");
+      return;
+    }
+
+    successMessage.classList.add("visible");
+    const modal = document.getElementById("dateModal");
+    modal.classList.remove("hidden");
+
+    const dateInput = document.getElementById("dateInput");
+    const timeInput = document.getElementById("timeInput");
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];
+    dateInput.min = today;
+    dateInput.value = today;
+    timeInput.value = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  });
+
+  document
+    .getElementById("dateForm")
+    .addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const dateInput = document.getElementById("dateInput");
+      const timeInput = document.getElementById("timeInput");
+      const preference = document.getElementById("datePreference");
+      const response = {
+        date: dateInput.value,
+        time: timeInput.value,
+        preference: preference.value,
+        song: proposal.song,
+        songUrl: proposal.songUrl,
+        image: proposal.image,
+        prompt: proposal.prompt,
+      };
+
+      // persist response and mark receiver as locked
+      const locked = true;
+      const stored = { ...proposal, response, locked };
+      saveProposalData(token, stored);
+      await submitResponseToBackend(token, response);
+
+      // Do not show more popups; show appreciation modal and close link for receiver
+      document.getElementById("dateModal").classList.add("hidden");
+      const randomMessage =
+        APPRECIATION_MESSAGES[
+          Math.floor(Math.random() * APPRECIATION_MESSAGES.length)
+        ];
+      thankYouText.textContent = randomMessage;
+      thankYouModal.classList.remove("hidden");
+      thankYouModal.classList.add("showing");
+
+      // Replace browser history so the receiver can't reopen with token
+      // Remove token and owner params for receiver by replacing URL to a generic path
+      try {
+        window.history.replaceState(
+          {},
+          "",
+          window.location.pathname + "?responded=true",
+        );
+      } catch (e) {
+        // ignore
+      }
+      successMessage.classList.add("visible");
+      successMessage.textContent =
+        "You just made my whole day brighter. I’m smiling already ❤️";
+    });
+
+  showPanel("receiverSection");
+}
+
+async function initSenderResponseViewer() {
+  const token = getTokenFromUrl();
+  if (!token) return;
+
+  const data = await fetchProposalFromBackend(token);
+  if (!data || !data.response) return;
+
+  const responseSection = document.getElementById("responseSection");
+  const resultImage = document.getElementById("resultImage");
+  const responseSummary = document.getElementById("responseSummary");
+  const resultSong = document.getElementById("resultSong");
+  const resultDate = document.getElementById("resultDate");
+  const resultTime = document.getElementById("resultTime");
+  const resultPreference = document.getElementById("resultPreference");
+
+  const response = data.response;
+  const selectedImage = response.image || data.image || "love2.jpeg";
+  const selectedSong = response.song || data.song || SONG_OPTIONS[0].label;
+
+  setBackgroundImage(responseSection, selectedImage);
+  document.body.style.backgroundImage = `url('${resolveImageSource(selectedImage)}')`;
+  resultImage.src = resolveImageSource(selectedImage);
+  resultSong.textContent = `Song: ${selectedSong}`;
+  resultDate.textContent = `Date: ${formatDate(response.date)}`;
+  resultTime.textContent = `Time: ${formatTime(response.time)}`;
+  resultPreference.textContent = `Date vibe: ${response.preference}`;
+
+  responseSummary.innerHTML = `
+    <strong>${response.preference}</strong> sounds perfect.<br>
+    Your crush chose <strong>${formatDate(response.date)}</strong> at <strong>${formatTime(response.time)}</strong>.<br>
+    They said: <em>${data.prompt}</em>
+  `;
+
+  playBackgroundSong(selectedSong);
+  showPanel("responseSection");
+}
+
+function initSparkleEffects() {
+  window.addEventListener("pointermove", (event) => {
+    if (Math.random() > 0.42) {
+      createSparkleTrail(event);
+    }
+  });
+
+  window.addEventListener("click", (event) => {
+    for (let i = 0; i < 8; i += 1) {
+      const offsetX = (Math.random() - 0.5) * 40;
+      const offsetY = (Math.random() - 0.5) * 40;
+      createFloatingHeart(event.clientX + offsetX, event.clientY + offsetY);
+    }
+  });
+}
+
+async function initApp() {
+  const audio = document.getElementById("backgroundAudio");
+  initSparkleEffects();
+
+  document.addEventListener(
+    "pointerdown",
+    () => {
+      if (audio && audio.src) {
+        audio.play().catch(() => {});
+      }
+    },
+    { once: true },
+  );
+
+  // ── Handle Spotify OAuth callback ─────────────────────────────────────────
+  const urlParams = new URLSearchParams(window.location.search);
+  const spotifyCode = urlParams.get("code");
+  const spotifyError = urlParams.get("error");
+
+  if (spotifyError) {
+    // User denied Spotify access — just go to sender flow
+    window.history.replaceState({}, "", window.location.pathname);
+    await initSenderFlow();
+    showPanel("setupSection");
+    showToast("Spotify connection cancelled. You can still use the default playlist.");
+    return;
+  }
+
+  if (spotifyCode && sessionStorage.getItem(SPOTIFY_VERIFIER_KEY)) {
+    // Exchange code for token, then go to sender flow
+    await exchangeSpotifyCode(spotifyCode);
+    await initSenderFlow();
+    showPanel("setupSection");
+    return;
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const token = getTokenFromUrl();
+
+  if (token) {
+    const savedData = await fetchProposalFromBackend(token);
+    if (savedData && savedData.response) {
+      initSenderResponseViewer();
+      return;
+    }
+    initReceiverFlow();
+    return;
+  }
+
+  await initSenderFlow();
+  showPanel("setupSection");
+}
+
+initApp();

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pick Our Date</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body data-page="date">
+    <div class="balloon balloon-one">🎈</div>
+    <div class="balloon balloon-two">🎈</div>
+    <div class="balloon balloon-three">🎈</div>
+    <div class="balloon balloon-four">💖</div>
+    <div class="backdrop-shape shape-one"></div>
+    <div class="backdrop-shape shape-two"></div>
+    <div class="backdrop-shape shape-three"></div>
+
+    <main class="date-card">
+        <div class="sparkle sparkle-one"></div>
+        <div class="sparkle sparkle-two"></div>
+        <div class="sparkle sparkle-three"></div>
+
+        <section class="date-wrapper">
+            <p class="eyebrow">Sweetest plan</p>
+            <h2>Pick our date</h2>
+            <p>Choose the day and time that feels perfect for us, and I’ll be there with a smile.</p>
+
+            <form id="dateForm" class="date-form">
+                <div class="form-row">
+                    <label for="dateInput">Date</label>
+                    <input id="dateInput" name="date" type="date" required />
+                </div>
+
+                <div class="form-row">
+                    <label for="timeInput">Time</label>
+                    <input id="timeInput" name="time" type="time" required />
+                </div>
+
+                <button class="primary-btn" type="submit">Confirm our date</button>
+            </form>
+        </section>
+    </main>
+
+    <div id="appreciationModal" class="modal" aria-live="polite" aria-hidden="true">
+        <div class="modal-card">
+            <div class="modal-icon">💖</div>
+            <h3>Thank you</h3>
+            <p id="modalMessage">You made my day.</p>
+            <button id="closeModal" class="secondary-btn" type="button">Close</button>
+        </div>
+    </div>
+
+    <div id="responseToast" class="response-toast" aria-live="polite"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
