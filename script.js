@@ -994,4 +994,10 @@ async function initApp() {
   showPanel("setupSection");
 }
 
-initApp();
+// script.js is loaded at end of <body> so DOM is ready.
+// Catch any error so a failure never leaves a blank page.
+initApp().catch((err) => {
+  console.error("initApp failed:", err);
+  showPanel("setupSection");
+  initSenderFlow().catch(() => {});
+});
