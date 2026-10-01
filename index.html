@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Love Note</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💖</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -35,6 +36,8 @@
 </head>
 
 <body class="font-sans">
+  <!-- hide all panels until JS decides which one to show — prevents flash -->
+  <style>#setupSection,#receiverSection,#responseSection{display:none!important}</style>
 
   <!-- Balloons -->
   <div class="balloon balloon-one">🎈</div>
@@ -52,7 +55,7 @@
     <!-- ══════════════════════════════════════════════════════════════════════
          SETUP SECTION — Sender
     ══════════════════════════════════════════════════════════════════════ -->
-    <section id="setupSection" class="panel active">
+    <section id="setupSection" class="panel">
 
       <div class="setup-card">
         <!-- Header -->
@@ -157,15 +160,26 @@
     ══════════════════════════════════════════════════════════════════════ -->
     <section id="responseSection" class="panel hidden w-full">
       <div class="result-card">
-        <span class="eyebrow">Their answer 💌</span>
-        <h2 class="font-serif text-cream">She said yes! 🎉</h2>
-        <p class="message">Here's what your crush picked for your date:</p>
+        <span class="eyebrow">Their answer</span>
+        <h2 class="font-serif text-cream">Our date is set 💖</h2>
 
-        <div class="result-overlay-static mt-4">
-          <p id="resultDate">📅 Date: —</p>
-          <p id="resultTime">⏰ Time: —</p>
-          <p id="resultPreference">✨ Kind of date: —</p>
-          <p id="resultSong">🎵 Song: —</p>
+        <div class="result-detail-card mt-4">
+          <div class="result-detail-row">
+            <span class="result-detail-label">Song</span>
+            <span id="resultSong" class="result-detail-value">—</span>
+          </div>
+          <div class="result-detail-row">
+            <span class="result-detail-label">Date</span>
+            <span id="resultDate" class="result-detail-value">—</span>
+          </div>
+          <div class="result-detail-row">
+            <span class="result-detail-label">Time</span>
+            <span id="resultTime" class="result-detail-value">—</span>
+          </div>
+          <div class="result-detail-row">
+            <span class="result-detail-label">Date vibe</span>
+            <span id="resultPreference" class="result-detail-value">—</span>
+          </div>
         </div>
 
         <div id="responseSummary" class="response-summary mt-4"></div>

@@ -241,8 +241,11 @@ function readProposalData(token) {
 
 function showPanel(panelId) {
   document.querySelectorAll(".panel").forEach((panel) => {
-    panel.classList.toggle("active", panel.id === panelId);
-    panel.classList.toggle("hidden", panel.id !== panelId);
+    const isActive = panel.id === panelId;
+    panel.classList.toggle("active", isActive);
+    panel.classList.toggle("hidden", !isActive);
+    // override the inline display:none!important added for flash prevention
+    panel.style.display = isActive ? "" : "none";
   });
 }
 
@@ -543,7 +546,7 @@ async function initSenderFlow() {
       }
     };
 
-    window.history.replaceState({}, "", shareUrl);
+    window.history.replaceState({}, "", ownerUrl);
     setupSection.classList.add("is-shared");
     showToast("Your proposal link is ready.");
   });
@@ -668,16 +671,37 @@ async function initReceiverFlow() {
   const noBtn = document.querySelector(".no-btn-card");
   const btnRow = document.querySelector(".receiver-btn-row");
 
+  // Throttle so it can't move more than once every 400ms
+  let lastMove = 0;
+
   function moveNoButton() {
+    const now = Date.now();
+    if (now - lastMove < 700) return;
+    lastMove = now;
+
     if (!btnRow || !noBtn) return;
     const rowRect = btnRow.getBoundingClientRect();
     const btnRect = noBtn.getBoundingClientRect();
-    const padding = 8;
-    const maxX = Math.max(0, rowRect.width - btnRect.width - padding * 2);
-    const maxY = Math.max(0, rowRect.height - btnRect.height - padding * 2);
-    noBtn.style.position = "absolute";
-    noBtn.style.left = `${Math.random() * maxX + padding}px`;
-    noBtn.style.top = `${Math.random() * maxY + padding}px`;
+    const padding = 12;
+    // Yes button is pinned bottom-left — keep No away from that zone
+    const yesZoneW = 160; // approximate yes button zone width
+    const yesZoneH = 60;  // approximate yes button zone height
+
+    const maxX = rowRect.width - btnRect.width - padding;
+    const maxY = rowRect.height - btnRect.height - padding;
+
+    let newX, newY, attempts = 0;
+    do {
+      newX = Math.random() * (maxX - padding) + padding;
+      newY = Math.random() * (maxY - padding) + padding;
+      attempts++;
+      // avoid the bottom-left yes zone
+      const inYesZone = newX < yesZoneW && newY > rowRect.height - yesZoneH - padding;
+      if (!inYesZone) break;
+    } while (attempts < 15);
+
+    noBtn.style.left = `${newX}px`;
+    noBtn.style.top = `${newY}px`;
     noBtn.style.right = "auto";
     noBtn.style.transform = "none";
   }
@@ -688,7 +712,7 @@ async function initReceiverFlow() {
   noBtn.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    noBtn.textContent = "Nice try 😏";
+    noBtn.textContent = "Nice try �😊";
     moveNoButton();
   });
 
@@ -700,7 +724,7 @@ async function initReceiverFlow() {
       event.clientX - centerX,
       event.clientY - centerY,
     );
-    if (distance < 120) moveNoButton();
+    if (distance < 60) moveNoButton();
   });
 
   yesBtn.addEventListener("click", () => {
@@ -790,30 +814,32 @@ async function initSenderResponseViewer() {
   const token = getTokenFromUrl();
   if (!token) return;
 
-  const data = await fetchProposalFromBackend(token);
+  console.log("[VIEWER] fetching token:", token);
+  let data = null;
+  try {
+    const res = await fetch(`/api/proposal/${encodeURIComponent(token)}`);
+    if (res.ok) data = await res.json();
+  } catch (e) {
+    data = readProposalData(token);
+  }
+  if (!data) data = readProposalData(token);
+  console.log("[VIEWER] data.response:", !!data?.response, "| date:", data?.response?.date, "| pref:", data?.response?.preference);
   if (!data || !data.response) return;
 
   const responseSection = document.getElementById("responseSection");
-  const responseSummary = document.getElementById("responseSummary");
-  const resultSong = document.getElementById("resultSong");
-  const resultDate = document.getElementById("resultDate");
-  const resultTime = document.getElementById("resultTime");
-  const resultPreference = document.getElementById("resultPreference");
 
   const response = data.response;
   const selectedSong = response.song || data.song || SONG_OPTIONS[0].label;
 
-  // Populate the individual detail spans
-  resultSong.textContent = `🎵 ${selectedSong}`;
-  resultDate.textContent = `📅 ${formatDate(response.date)}`;
-  resultTime.textContent = `⏰ ${formatTime(response.time)}`;
-  resultPreference.textContent = `✨ ${response.preference}`;
+  document.getElementById("resultSong").textContent = selectedSong;
+  document.getElementById("resultDate").textContent = formatDate(response.date);
+  document.getElementById("resultTime").textContent = formatTime(response.time);
+  document.getElementById("resultPreference").textContent = response.preference;
 
-  // Full summary of what the receiver picked
-  responseSummary.innerHTML = `
-    <strong>${response.preference}</strong> — 
-    <strong>${formatDate(response.date)}</strong> at <strong>${formatTime(response.time)}</strong>.<br>
-    <span style="color:rgba(253,232,240,0.7);font-size:0.85rem;">They replied to: <em>${data.prompt}</em></span>
+  document.getElementById("responseSummary").innerHTML = `
+    <em style="color:rgba(253,232,240,0.6);font-size:0.82rem;">
+      In reply to: "${data.prompt}"
+    </em>
   `;
 
   // No music on the sender's side — music is only for the receiver
@@ -876,17 +902,40 @@ async function initApp() {
   const token = getTokenFromUrl();
   const ownerParam = getOwnerFromUrl();
 
+  console.log("[ROUTING] token:", token, "| ownerParam:", ownerParam);
+
   if (token) {
-    const savedData = await fetchProposalFromBackend(token);
+    let savedData = null;
+    try {
+      const res = await fetch(`/api/proposal/${encodeURIComponent(token)}`);
+      if (res.ok) {
+        savedData = await res.json();
+        if (savedData && savedData.token) {
+          saveProposalData(savedData.token, savedData);
+        }
+      } else {
+        console.warn("[ROUTING] API returned", res.status, "— are you running on the correct port? Open via http://localhost:3000");
+        savedData = readProposalData(token);
+      }
+    } catch (e) {
+      console.warn("[ROUTING] Fetch failed — open via http://localhost:3000, not Live Server", e.message);
+      savedData = readProposalData(token);
+    }
+    if (!savedData) savedData = readProposalData(token);
+
+    console.log("[ROUTING] savedData.response:", !!savedData?.response, "| savedData.ownerToken:", savedData?.ownerToken);
 
     if (savedData && savedData.response) {
-      // Response exists — only the sender (owner link) sees the result page
-      if (ownerParam && ownerParam === savedData.ownerToken) {
+      const ownerMatches = ownerParam && (
+        !savedData.ownerToken || ownerParam === savedData.ownerToken
+      );
+      console.log("[ROUTING] ownerMatches:", ownerMatches);
+      if (ownerMatches) {
+        console.log("[ROUTING] → initSenderResponseViewer");
         initSenderResponseViewer();
         return;
       }
       // Receiver or anyone else opening the share link after it was answered
-      // sees the sealed screen — they already submitted
       document.body.innerHTML = `
         <div style="
           min-height:100vh;display:flex;flex-direction:column;
@@ -901,6 +950,33 @@ async function initApp() {
           <p style="color:rgba(253,232,240,0.65);max-width:340px;line-height:1.8;margin:0;font-size:0.95rem;">
             This invitation has already been answered. Something beautiful is in the works.
           </p>
+        </div>`;
+      return;
+    }
+
+    // No response yet — if this is the owner, show a waiting screen
+    if (ownerParam) {
+      document.body.innerHTML = `
+        <div style="
+          min-height:100vh;display:flex;flex-direction:column;
+          align-items:center;justify-content:center;
+          font-family:'Inter',sans-serif;
+          background:linear-gradient(160deg,#1a0a0f 0%,#3d1a2e 45%,#1f0d1a 100%);
+          color:#fde8f0;text-align:center;padding:32px;gap:20px;">
+          <div style="font-size:3rem;animation:pulse 1.8s ease-in-out infinite;">💌</div>
+          <h2 style="font-family:'Cormorant Garamond',serif;font-size:2.4rem;margin:0;color:#fde8f0;">
+            Waiting for their answer
+          </h2>
+          <p style="color:rgba(253,232,240,0.65);max-width:340px;line-height:1.8;margin:0;font-size:0.95rem;">
+            Your crush hasn't responded yet. Come back here once they've replied to see their chosen date, time, and kind of date.
+          </p>
+          <button onclick="window.location.reload()" style="
+            margin-top:8px;padding:14px 32px;border:none;border-radius:999px;
+            background:linear-gradient(135deg,#d4a843,#c9748a);
+            color:#fff;font-weight:800;font-size:0.95rem;cursor:pointer;">
+            Check for reply
+          </button>
+          <style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}</style>
         </div>`;
       return;
     }
