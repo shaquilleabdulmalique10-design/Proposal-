@@ -125,15 +125,25 @@ h1, h2, h3 { font-family: "Cormorant Garamond", serif; color: #fde8f0; }
   background: linear-gradient(160deg, rgba(26,10,15,0.55), rgba(61,26,46,0.45));
 }
 .result-overlay-static {
-  padding: 16px;
+  padding: 16px 18px;
   border-radius: 16px;
   background: rgba(26,10,15,0.55);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,0.1);
   color: #fde8f0;
-  font-size: 0.85rem;
-  line-height: 2;
+  font-size: 0.92rem;
   font-weight: 600;
+  display: grid;
+  gap: 10px;
+}
+.result-overlay-static p {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(201,116,138,0.2);
+  line-height: 1.5;
+  font-size: 0.95rem;
 }
 
 /* ── Eyebrow label ───────────────────────────────────────────────────────── */
@@ -201,6 +211,22 @@ textarea, select, input[type="date"], input[type="time"], input[type="text"], in
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   -webkit-appearance: none;
+}
+
+/* Allow native date/time picker icons to show */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+
+/* Style the native calendar/clock icon to match the theme */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(1) saturate(3) hue-rotate(290deg);
+  cursor: pointer;
+  opacity: 0.8;
+  scale: 1.2;
 }
 textarea::placeholder, input::placeholder { color: rgba(245,230,236,0.45); }
 textarea:focus, select:focus, input:focus {

@@ -658,26 +658,11 @@ async function initReceiverFlow() {
   receiverPrompt.textContent = proposal.prompt;
   receiverMessage.textContent = proposal.prompt;
 
-  // ── Invisible Spotify autoplay — no banner, music plays like magic ────────
+  // ── Invisible Spotify autoplay — set up URL, play after panel is shown ────
   const preferredSongUrl = proposal.songUrl || SPOTIFY_EMBED_SRC;
-  if (preferredSongUrl) {
-    const iframe = document.getElementById("spotifyPlayerInline");
-    if (iframe) {
-      const autoplayUrl = preferredSongUrl.includes("?")
-        ? preferredSongUrl.replace(/([?&])autoplay=\d/, "") + "&autoplay=1"
-        : preferredSongUrl + "?autoplay=1";
-
-      // Load immediately — stays invisible (0x0, opacity:0)
-      iframe.src = autoplayUrl;
-
-      // On first tap anywhere, nudge the iframe to start playing
-      const nudgeAutoplay = () => {
-        iframe.src = autoplayUrl;
-        document.removeEventListener("pointerdown", nudgeAutoplay);
-      };
-      document.addEventListener("pointerdown", nudgeAutoplay, { once: true });
-    }
-  }
+  const autoplayUrl = preferredSongUrl.includes("?")
+    ? preferredSongUrl.replace(/([?&])autoplay=\d/, "") + "&autoplay=1"
+    : preferredSongUrl + "?autoplay=1";
 
   const yesBtn = document.querySelector(".yes-btn-card");
   const noBtn = document.querySelector(".no-btn-card");
@@ -786,6 +771,26 @@ async function initReceiverFlow() {
     }); // end dateForm submit
 
   showPanel("receiverSection");
+
+  // ── Spotify autoplay — src set AFTER panel is visible so browser loads it ─
+  const iframe = document.getElementById("spotifyPlayerInline");
+  if (iframe) {
+    // Set src now that the section is displayed (not display:none)
+    iframe.src = autoplayUrl;
+
+    // Browsers block autoplay until a user gesture — on first tap, reload the
+    // src to satisfy the gesture requirement and kick off playback
+    let nudged = false;
+    const nudgeAutoplay = () => {
+      if (!nudged) {
+        nudged = true;
+        iframe.src = "";
+        requestAnimationFrame(() => { iframe.src = autoplayUrl; });
+      }
+      document.removeEventListener("pointerdown", nudgeAutoplay);
+    };
+    document.addEventListener("pointerdown", nudgeAutoplay, { once: true });
+  }
 } // end initReceiverFlow
 
 async function initSenderResponseViewer() {
@@ -805,24 +810,20 @@ async function initSenderResponseViewer() {
   const response = data.response;
   const selectedSong = response.song || data.song || SONG_OPTIONS[0].label;
 
-  // Background is handled by CSS (love2.jpeg) — no dynamic setting needed
-  resultSong.textContent = `Song: ${selectedSong}`;
-  resultDate.textContent = `Date: ${formatDate(response.date)}`;
-  resultTime.textContent = `Time: ${formatTime(response.time)}`;
-  resultPreference.textContent = `Vibe: ${response.preference}`;
+  // Populate the individual detail spans
+  resultSong.textContent = `🎵 ${selectedSong}`;
+  resultDate.textContent = `📅 ${formatDate(response.date)}`;
+  resultTime.textContent = `⏰ ${formatTime(response.time)}`;
+  resultPreference.textContent = `✨ ${response.preference}`;
 
+  // Full summary of what the receiver picked
   responseSummary.innerHTML = `
-    <strong>${response.preference}</strong> sounds perfect.<br>
-    Your crush chose <strong>${formatDate(response.date)}</strong> at <strong>${formatTime(response.time)}</strong>.<br>
-    They said: <em>${data.prompt}</em>
+    <strong>${response.preference}</strong> — 
+    <strong>${formatDate(response.date)}</strong> at <strong>${formatTime(response.time)}</strong>.<br>
+    <span style="color:rgba(253,232,240,0.7);font-size:0.85rem;">They replied to: <em>${data.prompt}</em></span>
   `;
 
-  playBackgroundSong(selectedSong);
-  // Also update the result section iframe directly
-  const resultIframe = document.getElementById("spotifyPlayerResult");
-  if (resultIframe && data.songUrl) {
-    resultIframe.src = data.songUrl;
-  }
+  // No music on the sender's side — music is only for the receiver
   showPanel("responseSection");
 }
 
