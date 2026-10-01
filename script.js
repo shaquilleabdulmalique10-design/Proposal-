@@ -243,9 +243,13 @@ function showPanel(panelId) {
   document.querySelectorAll(".panel").forEach((panel) => {
     const isActive = panel.id === panelId;
     panel.classList.toggle("active", isActive);
-    panel.classList.toggle("hidden", !isActive);
-    // override the inline display:none!important added for flash prevention
-    panel.style.display = isActive ? "" : "none";
+    if (isActive) {
+      // receiverSection and responseSection are flex containers
+      const flexPanels = ["receiverSection", "responseSection"];
+      panel.style.display = flexPanels.includes(panel.id) ? "flex" : "block";
+    } else {
+      panel.style.display = "none";
+    }
   });
 }
 
