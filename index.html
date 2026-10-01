@@ -2,189 +2,237 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Love Note</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet" />
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Love Note</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            burgundy:  '#1a0a0f',
+            plum:      '#3d1a2e',
+            rose:      '#c9748a',
+            blush:     '#f2b5c5',
+            champagne: '#f5deb3',
+            gold:      '#d4a843',
+            cream:     '#fde8f0',
+          },
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'serif'],
+            sans:  ['"Inter"', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
-<body data-page="app">
-    <div class="balloon balloon-one">🎈</div>
-    <div class="balloon balloon-two">🎈</div>
-    <div class="balloon balloon-three">🎈</div>
-    <div class="balloon balloon-four">💖</div>
+<body class="font-sans">
 
-    <audio id="backgroundAudio" loop preload="auto"></audio>
-    <iframe id="spotifyPlayer" class="spotify-player hidden" title="Spotify Embed: Recommendation Playlist"
-        src="https://open.spotify.com/embed/playlist/1HZSvtGeTj9bP8wb0k3Xg1?utm_source=generator&theme=0" width="100%"
-        height="100%" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-        loading="lazy"></iframe>
+  <!-- Balloons -->
+  <div class="balloon balloon-one">🎈</div>
+  <div class="balloon balloon-two">🎈</div>
+  <div class="balloon balloon-three">🎈</div>
+  <div class="balloon balloon-four">💖</div>
 
-    <div class="page-wrap">
-        <section id="setupSection" class="panel active">
-            <div class="hero-image-wrap">
-                <img src="image/love1.jpeg" alt="Love note illustration" />
-            </div>
+  <audio id="backgroundAudio" loop preload="auto"></audio>
+  <iframe id="spotifyPlayer" class="hidden" title="Spotify player" src="" frameborder="0"
+    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
 
-            <div class="setup-card">
-                <p class="eyebrow">A little surprise</p>
-                <h1>Make their heart skip a beat</h1>
+  <!-- ── Page wrap ─────────────────────────────────────────────────────────── -->
+  <div class="relative z-10 w-full max-w-lg mx-auto px-4 py-8 min-h-screen flex flex-col justify-center">
 
-                <div class="choice-block">
-                    <h2>Who is this proposal for?</h2>
-                    <div class="option-row">
-                        <button class="choice-btn" data-gender="male" type="button">Male</button>
-                        <button class="choice-btn selected" data-gender="female" type="button">Female</button>
-                    </div>
-                </div>
+    <!-- ══════════════════════════════════════════════════════════════════════
+         SETUP SECTION — Sender
+    ══════════════════════════════════════════════════════════════════════ -->
+    <section id="setupSection" class="panel active">
 
-                <div id="promptSection" class="prompt-section">
-                    <h3>Select a sweet prompt</h3>
-                    <div id="promptList" class="prompt-list"></div>
-                </div>
+      <div class="setup-card">
+        <!-- Header -->
+        <span class="eyebrow">A little surprise</span>
+        <h1 class="font-serif text-5xl leading-none text-cream mb-1">Make their<br/>heart skip</h1>
 
-                <div id="customSection" class="custom-section">
-                    <label for="customMessage">Or write your own message</label>
-                    <textarea id="customMessage" rows="3" placeholder="Write a sweet line for them..."></textarea>
-                </div>
-
-                <div id="songSection" class="custom-section">
-                    <label for="songSelect">Pick a song</label>
-                    <select id="songSelect"></select>
-                </div>
-
-                <div id="imageSection" class="custom-section">
-                    <label for="imageSelect">Pick a final image mood</label>
-                    <select id="imageSelect">
-                        <option value="love1.jpeg">Love Moment</option>
-                        <option value="love2.jpeg">Dreamy Evening</option>
-                    </select>
-                </div>
-
-                <div class="custom-section">
-                    <label for="photoUpload">Add photo (optional)</label>
-                    <input id="photoUpload" type="file" accept="image/*" />
-                </div>
-
-                <button id="generateLinkBtn" class="primary-btn" type="button">Generate share link</button>
-
-                <div id="shareBox" class="share-box hidden">
-                    <label for="shareLink">Send this link</label>
-                    <div class="share-row">
-                        <input id="shareLink" type="text" readonly />
-                        <button id="copyLinkBtn" class="mini-btn" type="button">Copy</button>
-                    </div>
-                </div>
-                <div id="ownerBox" class="share-box hidden">
-                    <label for="ownerLink">Owner link (keep private)</label>
-                    <div class="share-row">
-                        <input id="ownerLink" type="text" readonly />
-                        <button id="copyOwnerBtn" class="mini-btn" type="button">Copy</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="receiverSection" class="panel hidden">
-            <div class="proposal-card">
-                <div class="sparkle sparkle-one"></div>
-                <div class="sparkle sparkle-two"></div>
-                <div class="sparkle sparkle-three"></div>
-
-                <p id="receiverEyebrow" class="eyebrow">A little note</p>
-                <h2 id="receiverPrompt">Will you go out with me?</h2>
-
-                <p id="receiverMessage" class="message">
-                    You’ve made my heart smile in ways I can’t explain. I’d love to spend time with you and make a
-                    beautiful memory together.
-                </p>
-
-                <div class="button-zone" aria-label="Choice area">
-                    <button class="action-btn yes-btn" type="button">Yes, I’d love to</button>
-                    <button class="action-btn no-btn" type="button" aria-label="No button">No</button>
-                </div>
-
-                <div class="success-message" id="successMessage" aria-live="polite">
-                    You just made my whole day brighter. I’m smiling already ❤️
-                </div>
-            </div>
-        </section>
-
-        <section id="responseSection" class="panel hidden">
-            <div class="result-card">
-                <p class="eyebrow">Their answer</p>
-                <h2>Our date is set</h2>
-
-                <div id="resultImageWrap" class="result-image-wrap">
-                    <img id="resultImage" src="image/love2.jpeg" alt="Final romantic scene" />
-                    <div class="result-overlay">
-                        <p id="resultSong">Song: Love Playlist</p>
-                        <p id="resultDate">Date: --</p>
-                        <p id="resultTime">Time: --</p>
-                        <p id="resultPreference">Date vibe: --</p>
-                    </div>
-                </div>
-
-                <div id="spotifyEmbedWrap" class="spotify-embed-wrap">
-                    <iframe id="spotifyPlayerInline" title="Spotify Embed: Recommendation Playlist"
-                        src="https://open.spotify.com/embed/playlist/1HZSvtGeTj9bP8wb0k3Xg1?utm_source=generator&theme=0"
-                        width="100%" height="360" frameborder="0"
-                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                        loading="lazy"></iframe>
-                </div>
-
-                <div id="responseSummary" class="response-summary"></div>
-            </div>
-        </section>
-    </div>
-
-    <div id="dateModal" class="modal hidden">
-        <div class="modal-card">
-            <h3>Pick a date</h3>
-            <form id="dateForm" class="date-form">
-                <div class="form-row">
-                    <label for="dateInput">Date</label>
-                    <input id="dateInput" name="date" type="date" required />
-                </div>
-
-                <div class="form-row">
-                    <label for="timeInput">Time</label>
-                    <input id="timeInput" name="time" type="time" required />
-                </div>
-
-                <div class="form-row">
-                    <label for="datePreference">What kind of date would you prefer?</label>
-                    <select id="datePreference" name="datePreference">
-                        <option value="Dinner date">Dinner date</option>
-                        <option value="Coffee date">Coffee date</option>
-                        <option value="Movie date">Movie date</option>
-                        <option value="Picnic date">Picnic date</option>
-                        <option value="Walk and talk">Walk and talk</option>
-                    </select>
-                </div>
-
-                <button class="primary-btn" type="submit">Send my answer</button>
-            </form>
+        <!-- Gender choice -->
+        <div class="mt-7">
+          <span class="section-label block mb-3">Who is this for?</span>
+          <div class="flex gap-3">
+            <button class="choice-btn" data-gender="male" type="button">👦 Male</button>
+            <button class="choice-btn selected" data-gender="female" type="button">👧 Female</button>
+          </div>
         </div>
-    </div>
 
-    <div id="thankYouModal" class="modal hidden">
-        <div class="modal-card">
-            <div class="modal-icon">💖</div>
-            <h3>So happy you said yes</h3>
-            <p id="thankYouText">You just made my heart smile.</p>
-            <button id="closeThankYouBtn" class="secondary-btn" type="button">Beautiful</button>
+        <!-- Prompt selector -->
+        <div id="promptSection" class="mt-7">
+          <span class="section-label block mb-3">Pick a sweet prompt</span>
+          <div id="promptList" class="grid grid-cols-1 gap-2"></div>
         </div>
+
+        <!-- Custom message -->
+        <div id="customSection" class="mt-6">
+          <label class="section-label block mb-1" for="customMessage">Or write your own</label>
+          <textarea id="customMessage" rows="3"
+            placeholder="Write a sweet line for them…"
+            class="resize-none"></textarea>
+        </div>
+
+        <!-- Song / playlist picker -->
+        <div id="songSection" class="mt-6">
+          <!-- JS will inject the Spotify picker here -->
+        </div>
+
+        <!-- Generate link -->
+        <button id="generateLinkBtn" class="primary-btn" type="button">
+          ✨ Generate share link
+        </button>
+
+        <!-- Share link box -->
+        <div id="shareBox" class="share-box hidden">
+          <label>Send this link</label>
+          <div class="share-row">
+            <input id="shareLink" type="text" readonly />
+            <button id="copyLinkBtn" class="mini-btn" type="button">Copy</button>
+          </div>
+        </div>
+
+        <!-- Owner link box -->
+        <div id="ownerBox" class="share-box hidden">
+          <label>Owner link — keep private</label>
+          <div class="share-row">
+            <input id="ownerLink" type="text" readonly />
+            <button id="copyOwnerBtn" class="mini-btn" type="button">Copy</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         RECEIVER SECTION
+    ══════════════════════════════════════════════════════════════════════ -->
+    <section id="receiverSection" class="panel hidden">
+      <!-- Full-screen love1.jpeg background, content floats in the cream card zone -->
+      <div class="receiver-bg">
+
+        <!-- Invisible Spotify iframe — music plays like magic, no UI shown -->
+        <iframe id="spotifyPlayerInline"
+          title="Spotify"
+          src=""
+          width="0" height="0"
+          frameborder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          style="position:absolute;opacity:0;pointer-events:none;"
+          aria-hidden="true">
+        </iframe>
+
+        <!-- Content card — positioned inside the cream rectangle on the image -->
+        <div class="receiver-card">
+          <span id="receiverEyebrow" class="eyebrow-dark">A little note</span>
+          <h2 id="receiverPrompt" class="receiver-heading">Will you go out with me?</h2>
+          <p id="receiverMessage" class="receiver-message">
+            You've made my heart smile in ways I can't explain.
+          </p>
+
+          <div class="receiver-btn-row">
+            <button class="yes-btn-card" type="button">Yes, I'd love to 💛</button>
+            <button class="no-btn-card" type="button" aria-label="No button">No</button>
+          </div>
+
+          <div id="successMessage" class="success-msg-card" aria-live="polite">
+            You just made my whole day brighter ❤️
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         RESPONSE SECTION — Owner views result
+    ══════════════════════════════════════════════════════════════════════ -->
+    <section id="responseSection" class="panel hidden w-full">
+      <div class="result-card">
+        <span class="eyebrow">Their answer</span>
+        <h2 class="font-serif text-cream">Our date is set 💖</h2>
+
+        <div class="result-overlay-static mt-4">
+          <p id="resultSong">Song: —</p>
+          <p id="resultDate">Date: —</p>
+          <p id="resultTime">Time: —</p>
+          <p id="resultPreference">Vibe: —</p>
+        </div>
+
+        <div class="spotify-embed-wrap">
+          <iframe id="spotifyPlayerResult"
+            title="Spotify playlist"
+            src=""
+            width="100%" height="152" frameborder="0"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy"></iframe>
+        </div>
+
+        <div id="responseSummary" class="response-summary mt-4"></div>
+      </div>
+    </section>
+
+  </div><!-- /page-wrap -->
+
+  <!-- ── Date modal ─────────────────────────────────────────────────────────── -->
+  <div id="dateModal" class="modal hidden">
+    <div class="modal-card w-full">
+      <span class="modal-icon">📅</span>
+      <h3 class="font-serif text-cream">Pick our date</h3>
+      <p class="text-sm mt-1 mb-1" style="color:rgba(253,232,240,0.65);">
+        Choose the day and time that feels perfect.
+      </p>
+      <form id="dateForm" class="date-form">
+        <div class="form-row">
+          <label for="dateInput">Date</label>
+          <input id="dateInput" name="date" type="date" required />
+        </div>
+        <div class="form-row">
+          <label for="timeInput">Time</label>
+          <input id="timeInput" name="time" type="time" required />
+        </div>
+        <div class="form-row">
+          <label for="datePreference">What kind of date?</label>
+          <select id="datePreference" name="datePreference">
+            <option value="Dinner date">🍽 Dinner date</option>
+            <option value="Coffee date">☕ Coffee date</option>
+            <option value="Movie date">🎬 Movie date</option>
+            <option value="Picnic date">🧺 Picnic date</option>
+            <option value="Walk and talk">🚶 Walk and talk</option>
+          </select>
+        </div>
+        <button class="primary-btn" type="submit">Send my answer 💌</button>
+      </form>
     </div>
+  </div>
 
-    <div id="toast" class="toast" aria-live="polite"></div>
+  <!-- ── Thank you modal ────────────────────────────────────────────────────── -->
+  <div id="thankYouModal" class="modal hidden">
+    <div class="modal-card">
+      <span class="modal-icon">💖</span>
+      <h3 class="font-serif text-cream">So happy you said yes</h3>
+      <p id="thankYouText" class="mt-3 text-sm leading-relaxed"
+        style="color:rgba(253,232,240,0.75);">
+        You just made my heart smile.
+      </p>
+      <button id="closeThankYouBtn" class="secondary-btn w-full mt-4" type="button">
+        Beautiful ✨
+      </button>
+    </div>
+  </div>
 
-    <script src="script.js"></script>
+  <!-- ── Toast ──────────────────────────────────────────────────────────────── -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script src="script.js"></script>
 </body>
 
 </html>

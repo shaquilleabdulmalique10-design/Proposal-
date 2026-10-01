@@ -92,8 +92,9 @@ async function fetchSpotifyPlaylists(accessToken) {
   }
 }
 
-function buildSpotifyEmbedUrl(playlistId) {
-  return `https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&theme=0`;
+function buildSpotifyEmbedUrl(playlistId, autoplay = false) {
+  const base = `https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&theme=0`;
+  return autoplay ? `${base}&autoplay=1` : base;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -128,7 +129,7 @@ const APPRECIATION_MESSAGES = [
   "My heart is so full right now. You’ve made me feel unbelievably lucky, and I’m excited for what’s ahead.",
 ];
 
-const FALLBACK_IMAGE = "image/love1.jpeg";
+const FALLBACK_IMAGE = "image/love2.jpeg";
 
 function getTokenFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -169,17 +170,6 @@ function formatTime(timeValue) {
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-function resolveImageSource(imageValue) {
-  if (!imageValue) return FALLBACK_IMAGE;
-  return imageValue.startsWith("data:") ? imageValue : `image/${imageValue}`;
-}
-
-function setBackgroundImage(targetElement, imageValue) {
-  if (!targetElement) return;
-  const imageUrl = resolveImageSource(imageValue);
-  targetElement.style.backgroundImage = `url('${imageUrl}')`;
 }
 
 function getSongMeta(songLabelOrUrl) {
@@ -342,12 +332,9 @@ async function initSenderFlow() {
   const shareLinkInput = document.getElementById("shareLink");
   const customMessage = document.getElementById("customMessage");
   const songSection = document.getElementById("songSection");
-  const imageSelect = document.getElementById("imageSelect");
-  const photoUpload = document.getElementById("photoUpload");
 
   let selectedGender = "female";
   let selectedPrompt = PROMPT_BANK.female[0];
-  let uploadedImageData = "";
 
   // ── Spotify playlist picker state ─────────────────────────────────────────
   let selectedPlaylistId = SPOTIFY_FALLBACK_PLAYLIST_ID;
@@ -420,10 +407,10 @@ async function initSenderFlow() {
         document.getElementById("selectedPlaylistLabel").textContent =
           `Selected: ${pl.name}`;
 
-        // Show mini preview
+        // Show mini preview (no autoplay for sender)
         const previewWrap = document.getElementById("spotifyPreviewWrap");
         const previewIframe = document.getElementById("spotifyPlayerPreview");
-        previewIframe.src = selectedPlaylistEmbedUrl;
+        previewIframe.src = buildSpotifyEmbedUrl(pl.id, false);
         previewWrap.classList.remove("hidden");
       });
       grid.appendChild(card);
@@ -449,15 +436,6 @@ async function initSenderFlow() {
     }
     renderPlaylistPicker(playlists);
   }
-
-  // ── Photo upload ───────────────────────────────────────────────────────────
-  photoUpload.addEventListener("change", (event) => {
-    const file = event.target.files && event.target.files[0];
-    if (!file) { uploadedImageData = ""; return; }
-    const reader = new FileReader();
-    reader.onload = (e) => { uploadedImageData = e.target.result; };
-    reader.readAsDataURL(file);
-  });
 
   // ── Prompt rendering ───────────────────────────────────────────────────────
   function renderPrompts(gender) {
@@ -496,14 +474,14 @@ async function initSenderFlow() {
   // ── Generate link ──────────────────────────────────────────────────────────
   generateLinkBtn.addEventListener("click", async () => {
     const message = customMessage.value.trim() || selectedPrompt;
-    const chosenImage = uploadedImageData || imageSelect.value;
+    const chosenImage = "love2.jpeg";
     const ownerToken = `owner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     const payload = {
       gender: selectedGender,
       prompt: message,
       song: selectedPlaylistName,
-      songUrl: selectedPlaylistEmbedUrl,
+      songUrl: buildSpotifyEmbedUrl(selectedPlaylistId, true),
       image: chosenImage,
       createdAt: new Date().toISOString(),
       ownerToken,
@@ -587,6 +565,43 @@ async function initReceiverFlow() {
 
   closeThankYouBtn.addEventListener("click", () => {
     thankYouModal.classList.add("hidden");
+
+    // Mark link as consumed in localStorage so it can't be reopened
+    const consumed = { ...proposal, consumed: true };
+    saveProposalData(token, consumed);
+
+    // Wipe the URL so back/refresh doesn't reload the proposal
+    window.history.replaceState({}, "", window.location.pathname);
+
+    // Fade out and show a gentle closed screen
+    document.body.style.transition = "opacity 0.6s ease";
+    document.body.style.opacity = "0";
+    setTimeout(() => {
+      document.body.innerHTML = `
+        <div style="
+          min-height:100vh;
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          justify-content:center;
+          font-family:'Inter',sans-serif;
+          background:linear-gradient(160deg,#1a0a0f 0%,#3d1a2e 45%,#1f0d1a 100%);
+          color:#fde8f0;
+          text-align:center;
+          padding:32px;
+          gap:16px;
+        ">
+          <div style="font-size:3rem;">💖</div>
+          <h2 style="font-family:'Cormorant Garamond',serif;font-size:2.6rem;margin:0;color:#fde8f0;">
+            This moment is sealed
+          </h2>
+          <p style="color:rgba(253,232,240,0.65);max-width:340px;line-height:1.8;margin:0;font-size:0.95rem;">
+            Your answer has been sent. Something beautiful is about to begin.
+          </p>
+        </div>
+      `;
+      document.body.style.opacity = "1";
+    }, 620);
   });
 
   thankYouModal.addEventListener("click", (event) => {
@@ -600,53 +615,77 @@ async function initReceiverFlow() {
     receiverPrompt.textContent = "This link has expired or is invalid.";
     receiverMessage.textContent =
       "Please ask for a fresh invitation from the sender.";
-    setBackgroundImage(receiverSection, "love1.jpeg");
     showPanel("receiverSection");
     return;
   }
 
-  setBackgroundImage(receiverSection, proposal.image || "love1.jpeg");
-  document.body.style.backgroundImage = `url('${resolveImageSource(proposal.image || "love1.jpeg")}')`;
+  // Block reopening if already consumed or locked
+  if (proposal.consumed || (proposal.locked && proposal.response)) {
+    document.body.innerHTML = `
+      <div style="
+        min-height:100vh;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        font-family:'Inter',sans-serif;
+        background:linear-gradient(160deg,#1a0a0f 0%,#3d1a2e 45%,#1f0d1a 100%);
+        color:#fde8f0;
+        text-align:center;
+        padding:32px;
+        gap:16px;
+      ">
+        <div style="font-size:3rem;">💖</div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:2.6rem;margin:0;color:#fde8f0;">
+          This moment is sealed
+        </h2>
+        <p style="color:rgba(253,232,240,0.65);max-width:340px;line-height:1.8;margin:0;font-size:0.95rem;">
+          This invitation has already been answered. Something beautiful is in the works.
+        </p>
+      </div>
+    `;
+    return;
+  }
 
+  // Background is handled by CSS (love1.jpeg) — no dynamic setting needed
   receiverEyebrow.textContent =
     proposal.gender === "male" ? "For him" : "For her";
   receiverPrompt.textContent = proposal.prompt;
   receiverMessage.textContent = proposal.prompt;
 
-  // attempt autoplay of the playlist for receiver
+  // ── Invisible Spotify autoplay — no banner, music plays like magic ────────
   const preferredSongUrl = proposal.songUrl || SPOTIFY_EMBED_SRC;
   if (preferredSongUrl) {
     const iframe = document.getElementById("spotifyPlayerInline");
     if (iframe) {
-      iframe.src = preferredSongUrl;
-      iframe.classList.remove("hidden");
-      // Some browsers block autoplay; try to play an audio element fallback
-      const audio = document.getElementById("backgroundAudio");
-      if (
-        audio &&
-        preferredSongUrl &&
-        !preferredSongUrl.includes("spotify.com/embed/playlist/")
-      ) {
-        audio.src = preferredSongUrl;
-        audio.loop = true;
-        audio.volume = 0.45;
-        audio.play().catch(() => {});
-      }
+      const autoplayUrl = preferredSongUrl.includes("?")
+        ? preferredSongUrl.replace(/([?&])autoplay=\d/, "") + "&autoplay=1"
+        : preferredSongUrl + "?autoplay=1";
+
+      // Load immediately — stays invisible (0x0, opacity:0)
+      iframe.src = autoplayUrl;
+
+      // On first tap anywhere, nudge the iframe to start playing
+      const nudgeAutoplay = () => {
+        iframe.src = autoplayUrl;
+        document.removeEventListener("pointerdown", nudgeAutoplay);
+      };
+      document.addEventListener("pointerdown", nudgeAutoplay, { once: true });
     }
   }
 
-  const yesBtn = document.querySelector(".yes-btn");
-  const noBtn = document.querySelector(".no-btn");
-  const zone = document.querySelector(".button-zone");
+  const yesBtn = document.querySelector(".yes-btn-card");
+  const noBtn = document.querySelector(".no-btn-card");
+  const btnRow = document.querySelector(".receiver-btn-row");
 
   function moveNoButton() {
-    if (!zone || !noBtn) return;
-    const zoneRect = zone.getBoundingClientRect();
-    const buttonRect = noBtn.getBoundingClientRect();
-    const padding = 18;
-    const maxX = Math.max(0, zoneRect.width - buttonRect.width - padding * 2);
-    const maxY = Math.max(0, zoneRect.height - buttonRect.height - padding * 2);
-
+    if (!btnRow || !noBtn) return;
+    const rowRect = btnRow.getBoundingClientRect();
+    const btnRect = noBtn.getBoundingClientRect();
+    const padding = 8;
+    const maxX = Math.max(0, rowRect.width - btnRect.width - padding * 2);
+    const maxY = Math.max(0, rowRect.height - btnRect.height - padding * 2);
+    noBtn.style.position = "absolute";
     noBtn.style.left = `${Math.random() * maxX + padding}px`;
     noBtn.style.top = `${Math.random() * maxY + padding}px`;
     noBtn.style.right = "auto";
@@ -708,7 +747,6 @@ async function initReceiverFlow() {
         preference: preference.value,
         song: proposal.song,
         songUrl: proposal.songUrl,
-        image: proposal.image,
         prompt: proposal.prompt,
       };
 
@@ -718,7 +756,10 @@ async function initReceiverFlow() {
       saveProposalData(token, stored);
       await submitResponseToBackend(token, response);
 
-      // Do not show more popups; show appreciation modal and close link for receiver
+      // Stop the invisible music
+      const musicIframe = document.getElementById("spotifyPlayerInline");
+      if (musicIframe) musicIframe.src = "";
+
       document.getElementById("dateModal").classList.add("hidden");
       const randomMessage =
         APPRECIATION_MESSAGES[
@@ -739,10 +780,6 @@ async function initReceiverFlow() {
       } catch (e) {
         // ignore
       }
-      successMessage.classList.add("visible");
-      successMessage.textContent =
-        "You just made my whole day brighter. I’m smiling already ❤️";
-    });
 
   showPanel("receiverSection");
 }
@@ -755,7 +792,6 @@ async function initSenderResponseViewer() {
   if (!data || !data.response) return;
 
   const responseSection = document.getElementById("responseSection");
-  const resultImage = document.getElementById("resultImage");
   const responseSummary = document.getElementById("responseSummary");
   const resultSong = document.getElementById("resultSong");
   const resultDate = document.getElementById("resultDate");
@@ -763,16 +799,13 @@ async function initSenderResponseViewer() {
   const resultPreference = document.getElementById("resultPreference");
 
   const response = data.response;
-  const selectedImage = response.image || data.image || "love2.jpeg";
   const selectedSong = response.song || data.song || SONG_OPTIONS[0].label;
 
-  setBackgroundImage(responseSection, selectedImage);
-  document.body.style.backgroundImage = `url('${resolveImageSource(selectedImage)}')`;
-  resultImage.src = resolveImageSource(selectedImage);
+  // Background is handled by CSS (love2.jpeg) — no dynamic setting needed
   resultSong.textContent = `Song: ${selectedSong}`;
   resultDate.textContent = `Date: ${formatDate(response.date)}`;
   resultTime.textContent = `Time: ${formatTime(response.time)}`;
-  resultPreference.textContent = `Date vibe: ${response.preference}`;
+  resultPreference.textContent = `Vibe: ${response.preference}`;
 
   responseSummary.innerHTML = `
     <strong>${response.preference}</strong> sounds perfect.<br>
@@ -781,6 +814,11 @@ async function initSenderResponseViewer() {
   `;
 
   playBackgroundSong(selectedSong);
+  // Also update the result section iframe directly
+  const resultIframe = document.getElementById("spotifyPlayerResult");
+  if (resultIframe && data.songUrl) {
+    resultIframe.src = data.songUrl;
+  }
   showPanel("responseSection");
 }
 
