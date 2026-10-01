@@ -4,7 +4,7 @@ const SPOTIFY_EMBED_SRC = `https://open.spotify.com/embed/playlist/${SPOTIFY_FAL
 
 // ── Spotify OAuth (PKCE) ──────────────────────────────────────────────────────
 const SPOTIFY_CLIENT_ID = "46f32d141ffa433ca3d9931c1e7c6fe3";
-const SPOTIFY_REDIRECT_URI = `${window.location.origin}/`;
+const SPOTIFY_REDIRECT_URI = window.location.origin + window.location.pathname;
 const SPOTIFY_SCOPES = "playlist-read-private playlist-read-collaborative";
 const SPOTIFY_TOKEN_KEY = "spotify_access_token";
 const SPOTIFY_VERIFIER_KEY = "spotify_pkce_verifier";
