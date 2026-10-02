@@ -384,10 +384,10 @@ select option { background: #3d1a2e; color: #f5e6ec; }
 
 .receiver-card {
   position: absolute;
-  top: 32%;
+  top: 36%;
   left: 8%;
   right: 8%;
-  bottom: 28%;
+  bottom: 32%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -461,7 +461,7 @@ select option { background: #3d1a2e; color: #f5e6ec; }
   transition: transform 0.18s ease;
   white-space: nowrap;
   position: absolute;
-  bottom: 8px;
+  bottom: 16px;
   left: 8px;
   z-index: 1;
 }
