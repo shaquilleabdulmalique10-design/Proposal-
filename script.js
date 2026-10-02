@@ -719,7 +719,7 @@ async function initReceiverFlow() {
   noBtn.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    noBtn.textContent = "Nice try �😊";
+    noBtn.textContent = "Nice try 🙃😊";
     moveNoButton();
   });
 
