@@ -666,7 +666,7 @@ async function initReceiverFlow() {
   receiverEyebrow.textContent =
     proposal.gender === "male" ? "For him" : "For her";
   receiverPrompt.textContent = proposal.prompt;
-  receiverMessage.textContent = proposal.prompt;
+  receiverMessage.textContent = ""; // avoid duplicating the prompt text
 
   // ── Invisible Spotify autoplay — set up URL, play after panel is shown ────
   const preferredSongUrl = proposal.songUrl || SPOTIFY_EMBED_SRC;
@@ -867,11 +867,7 @@ async function initSenderResponseViewer() {
   document.getElementById("resultTime").textContent = formatTime(response.time);
   document.getElementById("resultPreference").textContent = response.preference;
 
-  document.getElementById("responseSummary").innerHTML = `
-    <em style="color:rgba(253,232,240,0.6);font-size:0.82rem;">
-      In reply to: "${data.prompt}"
-    </em>
-  `;
+  document.getElementById("responseSummary").innerHTML = "";
 
   // No music on the sender's side — music is only for the receiver
   showPanel("responseSection");

@@ -393,9 +393,10 @@ select option { background: #3d1a2e; color: #f5e6ec; }
   align-items: center;
   justify-content: space-evenly;
   text-align: center;
-  padding: 8px;
+  padding: 8px 10px;
   gap: 4px;
   overflow: hidden;
+  max-width: 100%;
 }
 
 .eyebrow-dark {
@@ -407,36 +408,31 @@ select option { background: #3d1a2e; color: #f5e6ec; }
   display: block;
   flex-shrink: 0;
   width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .receiver-heading {
   font-family: "Cormorant Garamond", serif;
-  font-size: clamp(0.9rem, 3.5vw, 1.3rem);
+  font-size: clamp(0.78rem, 3vw, 1.05rem);
   font-weight: 700;
   color: #8b2020;
-  line-height: 1.2;
+  line-height: 1.25;
   margin: 0;
-  flex-shrink: 0;
+  flex-shrink: 1;
   width: 100%;
+  max-width: 100%;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
+  overflow-wrap: break-word;
   word-break: break-word;
 }
 
 .receiver-message {
-  font-size: clamp(0.62rem, 2.2vw, 0.75rem);
-  color: #8b2020;
-  line-height: 1.4;
-  margin: 0;
-  flex-shrink: 1;
-  width: 100%;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  word-break: break-word;
+  display: none;
 }
 
 .receiver-btn-row {

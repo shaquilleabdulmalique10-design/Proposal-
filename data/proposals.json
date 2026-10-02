@@ -1,1 +1,33 @@
-{}
+{
+  "proposal-1790863000523-dqq4hh": {
+    "token": "proposal-1790863000523-dqq4hh",
+    "gender": "female",
+    "prompt": "Hey beautiful, would you go on a date with me?",
+    "song": "Love Playlist",
+    "songUrl": "https://open.spotify.com/embed/playlist/6D49SvtyT9sW3XCmP8fWAY?utm_source=generator&theme=0&autoplay=1",
+    "image": "love2.jpeg",
+    "createdAt": "2026-10-01T13:56:40.487Z",
+    "ownerToken": "owner-1790863000487-um73d8"
+  },
+  "proposal-1790863675080-kaa340": {
+    "token": "proposal-1790863675080-kaa340",
+    "gender": "female",
+    "prompt": "Hey beautiful, would you go on a date with me?",
+    "song": "Love Playlist",
+    "songUrl": "https://open.spotify.com/embed/playlist/6D49SvtyT9sW3XCmP8fWAY?utm_source=generator&theme=0&autoplay=1",
+    "image": "love2.jpeg",
+    "createdAt": "2026-10-01T14:07:55.060Z",
+    "ownerToken": "owner-1790863675060-ewyq38",
+    "response": {
+      "date": "2026-10-01",
+      "time": "15:08",
+      "preference": "Dinner date",
+      "song": "Love Playlist",
+      "songUrl": "https://open.spotify.com/embed/playlist/6D49SvtyT9sW3XCmP8fWAY?utm_source=generator&theme=0&autoplay=1",
+      "image": "love2.jpeg",
+      "prompt": "Hey beautiful, would you go on a date with me?",
+      "submittedAt": "2026-10-01T14:08:30.799Z"
+    },
+    "locked": true
+  }
+}
