@@ -688,24 +688,29 @@ async function initReceiverFlow() {
 
     if (!btnRow || !noBtn) return;
     const rowRect = btnRow.getBoundingClientRect();
-    const btnRect = noBtn.getBoundingClientRect();
-    const padding = 12;
-    // Yes button is pinned bottom-left — keep No away from that zone
+    const btnW = noBtn.offsetWidth || 80;
+    const btnH = noBtn.offsetHeight || 36;
+    const padding = 6;
+
+    // Yes is pinned bottom-left — keep No out of that zone
     const yesZoneW = 140;
     const yesZoneH = 50;
 
-    const maxX = rowRect.width - btnRect.width - padding;
-    const maxY = rowRect.height - btnRect.height - padding;
+    const maxX = rowRect.width - btnW - padding;
+    const maxY = rowRect.height - btnH - padding;
 
     let newX, newY, attempts = 0;
     do {
       newX = Math.random() * (maxX - padding) + padding;
       newY = Math.random() * (maxY - padding) + padding;
       attempts++;
-      // avoid the bottom-left yes zone
       const inYesZone = newX < yesZoneW && newY > rowRect.height - yesZoneH - padding;
       if (!inYesZone) break;
     } while (attempts < 15);
+
+    // Hard clamp — never let it escape the row
+    newX = Math.max(padding, Math.min(newX, maxX));
+    newY = Math.max(padding, Math.min(newY, maxY));
 
     noBtn.style.left = `${newX}px`;
     noBtn.style.top = `${newY}px`;
