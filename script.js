@@ -691,8 +691,8 @@ async function initReceiverFlow() {
     const btnRect = noBtn.getBoundingClientRect();
     const padding = 12;
     // Yes button is pinned bottom-left — keep No away from that zone
-    const yesZoneW = 160; // approximate yes button zone width
-    const yesZoneH = 60;  // approximate yes button zone height
+    const yesZoneW = 140;
+    const yesZoneH = 50;
 
     const maxX = rowRect.width - btnRect.width - padding;
     const maxY = rowRect.height - btnRect.height - padding;
