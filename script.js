@@ -137,76 +137,84 @@ const FALLBACK_IMAGE = "image/love2.jpeg";
 // ── Proposal design catalogue ─────────────────────────────────────────────────
 const DESIGNS = [
   {
+    // love1: cream scrapbook — text sits in the cream rectangle
     id: "love1",
     label: "Scrapbook",
     image: "image/love1.jpeg",
     top: "36%", left: "8%", right: "8%", bottom: "32%",
-    textColor: "#8b2020",
-    btnBg: "#8b2020", btnColor: "#fff",
-    noBtnBg: "rgba(255,255,255,0.7)", noBtnColor: "#8b2020",
-  },
-  {
-    id: "love4",
-    label: "Vintage Rose",
-    image: "image/love4.jpeg",
-    top: "12%", left: "5%", right: "42%", bottom: "20%",
-    textColor: "#3a1a00",
-    btnBg: "#5c2a00", btnColor: "#fff",
-    noBtnBg: "rgba(255,255,255,0.8)", noBtnColor: "#5c2a00",
-  },
-  {
-    id: "love6",
-    label: "Teddy & Books",
-    image: "image/love6.jpeg",
-    top: "15%", left: "8%", right: "8%", bottom: "40%",
-    textColor: "#3a1a00",
-    btnBg: "#4a2c0a", btnColor: "#fff",
-    noBtnBg: "rgba(255,255,255,0.8)", noBtnColor: "#4a2c0a",
-  },
-  {
-    id: "love7",
-    label: "Ornate Frame",
-    image: "image/love7.jpeg",
-    top: "20%", left: "16%", right: "16%", bottom: "32%",
-    textColor: "#5a0a1e",
-    btnBg: "#5a0a1e", btnColor: "#fff",
-    noBtnBg: "rgba(255,255,255,0.8)", noBtnColor: "#5a0a1e",
-  },
-  {
-    id: "love8",
-    label: "Dark Roses",
-    image: "image/love8.jpeg",
-    top: "30%", left: "8%", right: "8%", bottom: "20%",
-    textColor: "#ffffff",
-    btnBg: "#ffffff", btnColor: "#5b0a1e",
-    noBtnBg: "rgba(255,255,255,0.25)", noBtnColor: "#ffffff",
-  },
-  {
-    id: "love9",
-    label: "Polaroid",
-    image: "image/love9.jpeg",
-    top: "26%", left: "20%", right: "20%", bottom: "36%",
-    textColor: "#8b2020",
+    textColor: "#6b0000",        // dark red on cream bg
     btnBg: "#8b2020", btnColor: "#fff",
     noBtnBg: "rgba(255,255,255,0.8)", noBtnColor: "#8b2020",
   },
   {
+    // love4: vintage rose — clear tan/beige left side
+    id: "love4",
+    label: "Vintage Rose",
+    image: "image/love4.jpeg",
+    top: "12%", left: "4%", right: "44%", bottom: "18%",
+    textColor: "#3a0a00",        // very dark brown on tan bg
+    btnBg: "#5c1a00", btnColor: "#fff",
+    noBtnBg: "rgba(255,255,255,0.85)", noBtnColor: "#5c1a00",
+  },
+  {
+    // love6: teddy & books — large cream torn paper in center
+    id: "love6",
+    label: "Teddy & Books",
+    image: "image/love6.jpeg",
+    top: "15%", left: "8%", right: "8%", bottom: "40%",
+    textColor: "#3a1a00",        // dark brown on cream
+    btnBg: "#4a2c0a", btnColor: "#fff",
+    noBtnBg: "rgba(255,255,255,0.85)", noBtnColor: "#4a2c0a",
+  },
+  {
+    // love7: ornate frame — cream rectangle in center
+    id: "love7",
+    label: "Ornate Frame",
+    image: "image/love7.jpeg",
+    top: "20%", left: "16%", right: "16%", bottom: "32%",
+    textColor: "#5a0a1e",        // deep burgundy on cream
+    btnBg: "#5a0a1e", btnColor: "#fff",
+    noBtnBg: "rgba(255,255,255,0.85)", noBtnColor: "#5a0a1e",
+  },
+  {
+    // love8: dark maroon rectangle — MUST use bright text
+    id: "love8",
+    label: "Dark Roses",
+    image: "image/love8.jpeg",
+    top: "28%", left: "8%", right: "8%", bottom: "20%",
+    textColor: "#ffe8f0",        // bright blush white on dark maroon
+    btnBg: "#ffe8f0", btnColor: "#5b0a1e",
+    noBtnBg: "rgba(255,232,240,0.2)", noBtnColor: "#ffe8f0",
+  },
+  {
+    // love9: polaroid — bright white space in center
+    id: "love9",
+    label: "Polaroid",
+    image: "image/love9.jpeg",
+    top: "26%", left: "20%", right: "20%", bottom: "36%",
+    textColor: "#6b0000",        // dark red on white
+    btnBg: "#8b2020", btnColor: "#fff",
+    noBtnBg: "rgba(255,255,255,0.85)", noBtnColor: "#8b2020",
+  },
+  {
+    // love10: red carpet border, crumpled tan paper center
     id: "love10",
     label: "Carpet & Paper",
     image: "image/love10.jpeg",
     top: "16%", left: "10%", right: "10%", bottom: "28%",
-    textColor: "#3a1a00",
-    btnBg: "#5c2000", btnColor: "#fff",
-    noBtnBg: "rgba(255,255,255,0.8)", noBtnColor: "#5c2000",
+    textColor: "#3a0a00",        // dark on tan paper
+    btnBg: "#5c1a00", btnColor: "#fff",
+    noBtnBg: "rgba(255,255,255,0.85)", noBtnColor: "#5c1a00",
   },
   {
+    // love11: dark maroon rectangle — MUST use bright text
     id: "love11",
     label: "Lipstick Kiss",
     image: "image/love11.jpeg",
     top: "16%", left: "8%", right: "8%", bottom: "26%",
-    textColor: "#ffffff",
-    btnBg: "#ffffff", btnColor: "#5b0a1e",
-    noBtnBg: "rgba(255,255,255,0.25)", noBtnColor: "#ffffff",
+    textColor: "#ffe8f0",        // bright blush white on dark maroon
+    btnBg: "#ffe8f0", btnColor: "#5b0a1e",
+    noBtnBg: "rgba(255,232,240,0.2)", noBtnColor: "#ffe8f0",
   },
 ];
 
