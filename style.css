@@ -243,9 +243,8 @@ textarea, select, input[type="date"], input[type="time"], input[type="text"], in
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   -webkit-appearance: none;
+  appearance: none;
 }
-
-/* Allow native date/time picker icons to show */
 input[type="date"],
 input[type="time"] {
   -webkit-appearance: auto;
@@ -436,6 +435,8 @@ select option { background: #3d1a2e; color: #f5e6ec; }
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
+  /* stylelint-disable-next-line */
+  box-orient: vertical;
   overflow-wrap: break-word;
   word-break: break-word;
 }

@@ -789,8 +789,14 @@ async function initReceiverFlow() {
   const receiverBg = document.querySelector(".receiver-bg");
   const receiverCard = document.querySelector(".receiver-card");
 
-  // Set data-design attribute — CSS uses this to pick the right background image
-  receiverBg.setAttribute("data-design", design.id);
+  // Inject a <style> tag to override the ::before background-image directly
+  // This is the most reliable cross-browser way to dynamically change ::before
+  const existingStyle = document.getElementById("design-override");
+  if (existingStyle) existingStyle.remove();
+  const styleTag = document.createElement("style");
+  styleTag.id = "design-override";
+  styleTag.textContent = `.receiver-bg::before { background-image: url('${design.image}') !important; }`;
+  document.head.appendChild(styleTag);
 
   // Position the card zone over the clear space in this design
   receiverCard.style.top = design.top;
