@@ -40,6 +40,7 @@ function normalizeProposal(payload) {
     song: payload.song || "Perfect - Ed Sheeran",
     songUrl: payload.songUrl || "",
     image: payload.image || "love1.jpeg",
+    design: payload.design || "love1",
     createdAt: payload.createdAt || new Date().toISOString(),
   };
 }
