@@ -374,8 +374,8 @@ select option { background: #3d1a2e; color: #f5e6ec; }
 .receiver-bg::before {
   content: "";
   display: block;
-  padding-top: 177.72%; /* 1308/736 aspect ratio of love1.jpeg */
-  background-image: url('image/love1.jpeg');
+  padding-top: 177.72%; /* 1308/736 aspect ratio */
+  background-image: var(--design-image, url('image/love1.jpeg'));
   background-size: contain;
   background-repeat: no-repeat;
   background-position: top center;
@@ -784,4 +784,50 @@ select option { background: #3d1a2e; color: #f5e6ec; }
   .yes-btn { top: 28%; transform: translate(-50%, -50%); }
   .no-btn  { top: 70%; transform: translate(-50%, -50%); }
   .button-zone { height: 180px; }
+}
+
+/* ── Design picker grid ──────────────────────────────────────────────────── */
+.design-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.design-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 4px 8px;
+  border: 2px solid rgba(201,116,138,0.25);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.68rem;
+  color: #f5e6ec;
+  font-weight: 600;
+  line-height: 1.3;
+  transition: all 0.2s ease;
+}
+.design-card img {
+  width: 100%;
+  aspect-ratio: 9/16;
+  object-fit: cover;
+  border-radius: 8px;
+  pointer-events: none;
+}
+.design-card:hover {
+  border-color: rgba(201,116,138,0.6);
+  background: rgba(255,255,255,0.1);
+}
+.design-card.selected {
+  border-color: #d4a843;
+  background: rgba(212,168,67,0.12);
+  box-shadow: 0 0 0 2px rgba(212,168,67,0.4);
+}
+.design-card span {
+  display: block;
+  margin-top: 2px;
 }

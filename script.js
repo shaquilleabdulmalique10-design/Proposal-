@@ -134,6 +134,100 @@ const APPRECIATION_MESSAGES = [
 
 const FALLBACK_IMAGE = "image/love2.jpeg";
 
+// ── Proposal design catalogue ─────────────────────────────────────────────────
+// Each entry defines which image to use, where the clear card zone sits
+// (as % from each edge of the image), and the best text/button color for that zone.
+const DESIGNS = [
+  {
+    id: "love1",
+    label: "Scrapbook",
+    image: "image/love1.jpeg",
+    top: "36%", left: "8%", right: "8%", bottom: "32%",
+    textColor: "#8b2020",
+    btnBg: "#8b2020",
+    btnColor: "#fff",
+    noBtnBg: "rgba(255,255,255,0.55)",
+    noBtnColor: "#8b2020",
+  },
+  {
+    id: "love4",
+    label: "Vintage Rose",
+    image: "image/love4.jpeg",
+    top: "15%", left: "5%", right: "45%", bottom: "18%",
+    textColor: "#4a2000",
+    btnBg: "#6b3a1f",
+    btnColor: "#fff",
+    noBtnBg: "rgba(255,255,255,0.55)",
+    noBtnColor: "#6b3a1f",
+  },
+  {
+    id: "love6",
+    label: "Teddy & Books",
+    image: "image/love6.jpeg",
+    top: "18%", left: "10%", right: "12%", bottom: "38%",
+    textColor: "#4a2c0a",
+    btnBg: "#5c3a1e",
+    btnColor: "#fff",
+    noBtnBg: "rgba(255,255,255,0.55)",
+    noBtnColor: "#5c3a1e",
+  },
+  {
+    id: "love7",
+    label: "Ornate Frame",
+    image: "image/love7.jpeg",
+    top: "22%", left: "18%", right: "18%", bottom: "30%",
+    textColor: "#6b0a2e",
+    btnBg: "#6b0a2e",
+    btnColor: "#fff",
+    noBtnBg: "rgba(255,255,255,0.55)",
+    noBtnColor: "#6b0a2e",
+  },
+  {
+    id: "love8",
+    label: "Dark Roses",
+    image: "image/love8.jpeg",
+    top: "32%", left: "10%", right: "10%", bottom: "22%",
+    textColor: "#fde8f0",
+    btnBg: "#fde8f0",
+    btnColor: "#5b0a1e",
+    noBtnBg: "rgba(253,232,240,0.2)",
+    noBtnColor: "#fde8f0",
+  },
+  {
+    id: "love9",
+    label: "Polaroid",
+    image: "image/love9.jpeg",
+    top: "28%", left: "22%", right: "22%", bottom: "35%",
+    textColor: "#8b2020",
+    btnBg: "#8b2020",
+    btnColor: "#fff",
+    noBtnBg: "rgba(255,255,255,0.55)",
+    noBtnColor: "#8b2020",
+  },
+  {
+    id: "love10",
+    label: "Carpet & Paper",
+    image: "image/love10.jpeg",
+    top: "18%", left: "12%", right: "12%", bottom: "30%",
+    textColor: "#5c3a1e",
+    btnBg: "#6b2020",
+    btnColor: "#fff",
+    noBtnBg: "rgba(255,255,255,0.55)",
+    noBtnColor: "#6b2020",
+  },
+  {
+    id: "love11",
+    label: "Lipstick Kiss",
+    image: "image/love11.jpeg",
+    top: "18%", left: "10%", right: "10%", bottom: "28%",
+    textColor: "#fde8f0",
+    btnBg: "#fde8f0",
+    btnColor: "#5b0a1e",
+    noBtnBg: "rgba(253,232,240,0.2)",
+    noBtnColor: "#fde8f0",
+  },
+];
+
 function getTokenFromUrl() {
   const params = new URLSearchParams(window.location.search);
   return params.get("token");
@@ -346,6 +440,27 @@ async function initSenderFlow() {
   let selectedGender = "female";
   let selectedPrompt = PROMPT_BANK.female[0];
 
+  // ── Design picker ──────────────────────────────────────────────────────────
+  let selectedDesign = DESIGNS[0]; // default: love1 scrapbook
+
+  const designGrid = document.getElementById("designGrid");
+  DESIGNS.forEach((design) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "design-card" + (design.id === selectedDesign.id ? " selected" : "");
+    btn.dataset.id = design.id;
+    btn.innerHTML = `
+      <img src="${design.image}" alt="${design.label}" loading="lazy" />
+      <span>${design.label}</span>
+    `;
+    btn.addEventListener("click", () => {
+      designGrid.querySelectorAll(".design-card").forEach(c => c.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedDesign = design;
+    });
+    designGrid.appendChild(btn);
+  });
+
   // ── Spotify playlist picker state ─────────────────────────────────────────
   let selectedPlaylistId = SPOTIFY_FALLBACK_PLAYLIST_ID;
   let selectedPlaylistName = "Love Playlist";
@@ -498,6 +613,7 @@ async function initSenderFlow() {
       song: selectedPlaylistName,
       songUrl: buildSpotifyEmbedUrl(selectedPlaylistId, true),
       image: chosenImage,
+      design: selectedDesign.id,
       createdAt: new Date().toISOString(),
       ownerToken,
     };
@@ -668,14 +784,39 @@ async function initReceiverFlow() {
   receiverPrompt.textContent = proposal.prompt;
   receiverMessage.textContent = ""; // avoid duplicating the prompt text
 
+  // ── Apply chosen design ────────────────────────────────────────────────────
+  const design = DESIGNS.find(d => d.id === proposal.design) || DESIGNS[0];
+  const receiverBg = document.querySelector(".receiver-bg");
+  const receiverCard = document.querySelector(".receiver-card");
+
+  // Set the background image to the chosen design
+  receiverBg.style.setProperty("--design-image", `url('${design.image}')`);
+
+  // Position the card zone over the clear space in this design
+  receiverCard.style.top = design.top;
+  receiverCard.style.left = design.left;
+  receiverCard.style.right = design.right;
+  receiverCard.style.bottom = design.bottom;
+
+  // Apply text and button colors for this design
+  receiverCard.style.setProperty("--text-color", design.textColor);
+  document.querySelector(".eyebrow-dark").style.color = design.textColor;
+  document.querySelector(".receiver-heading").style.color = design.textColor;
+
+  const yesBtn = document.querySelector(".yes-btn-card");
+  const noBtn = document.querySelector(".no-btn-card");
+  yesBtn.style.background = design.btnBg;
+  yesBtn.style.color = design.btnColor;
+  noBtn.style.background = design.noBtnBg;
+  noBtn.style.color = design.noBtnColor;
+  noBtn.style.borderColor = design.noBtnColor;
+
   // ── Invisible Spotify autoplay — set up URL, play after panel is shown ────
   const preferredSongUrl = proposal.songUrl || SPOTIFY_EMBED_SRC;
   const autoplayUrl = preferredSongUrl.includes("?")
     ? preferredSongUrl.replace(/([?&])autoplay=\d/, "") + "&autoplay=1"
     : preferredSongUrl + "?autoplay=1";
 
-  const yesBtn = document.querySelector(".yes-btn-card");
-  const noBtn = document.querySelector(".no-btn-card");
   const btnRow = document.querySelector(".receiver-btn-row");
 
   // Throttle so it can't move more than once every 400ms
