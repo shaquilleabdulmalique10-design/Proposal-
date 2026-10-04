@@ -789,8 +789,8 @@ async function initReceiverFlow() {
   const receiverBg = document.querySelector(".receiver-bg");
   const receiverCard = document.querySelector(".receiver-card");
 
-  // Set the background image to the chosen design
-  receiverBg.style.setProperty("--design-image", `url('${design.image}')`);
+  // Set data-design attribute — CSS uses this to pick the right background image
+  receiverBg.setAttribute("data-design", design.id);
 
   // Position the card zone over the clear space in this design
   receiverCard.style.top = design.top;

@@ -258,7 +258,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   filter: invert(0.8) sepia(1) saturate(3) hue-rotate(290deg);
   cursor: pointer;
   opacity: 0.8;
-  scale: 1.2;
+  transform: scale(1.2);
 }
 textarea::placeholder, input::placeholder { color: rgba(245,230,236,0.45); }
 textarea:focus, select:focus, input:focus {
@@ -374,13 +374,22 @@ select option { background: #3d1a2e; color: #f5e6ec; }
 .receiver-bg::before {
   content: "";
   display: block;
-  padding-top: 177.72%; /* 1308/736 aspect ratio */
-  background-image: var(--design-image, url('image/love1.jpeg'));
+  padding-top: 177.72%;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: top center;
   border-radius: 12px;
 }
+
+/* Per-design background images set via data-design attribute */
+.receiver-bg[data-design="love1"]::before { background-image: url('image/love1.jpeg'); }
+.receiver-bg[data-design="love4"]::before { background-image: url('image/love4.jpeg'); }
+.receiver-bg[data-design="love6"]::before { background-image: url('image/love6.jpeg'); }
+.receiver-bg[data-design="love7"]::before { background-image: url('image/love7.jpeg'); }
+.receiver-bg[data-design="love8"]::before { background-image: url('image/love8.jpeg'); }
+.receiver-bg[data-design="love9"]::before { background-image: url('image/love9.jpeg'); }
+.receiver-bg[data-design="love10"]::before { background-image: url('image/love10.jpeg'); }
+.receiver-bg[data-design="love11"]::before { background-image: url('image/love11.jpeg'); }
 
 .receiver-card {
   position: absolute;
