@@ -182,9 +182,9 @@ const DESIGNS = [
     label: "Dark Roses",
     image: "image/love8.jpeg",
     top: "28%", left: "8%", right: "8%", bottom: "20%",
-    textColor: "#ffe8f0",        // bright blush white on dark maroon
-    btnBg: "#ffe8f0", btnColor: "#5b0a1e",
-    noBtnBg: "rgba(255,232,240,0.2)", noBtnColor: "#ffe8f0",
+    textColor: "#ffffff",
+    btnBg: "#ffffff", btnColor: "#5b0a1e",
+    noBtnBg: "rgba(255,255,255,0.3)", noBtnColor: "#ffffff",
   },
   {
     // love9: polaroid — bright white space in center
@@ -212,9 +212,9 @@ const DESIGNS = [
     label: "Lipstick Kiss",
     image: "image/love11.jpeg",
     top: "16%", left: "8%", right: "8%", bottom: "26%",
-    textColor: "#ffe8f0",        // bright blush white on dark maroon
-    btnBg: "#ffe8f0", btnColor: "#5b0a1e",
-    noBtnBg: "rgba(255,232,240,0.2)", noBtnColor: "#ffe8f0",
+    textColor: "#ffffff",
+    btnBg: "#ffffff", btnColor: "#5b0a1e",
+    noBtnBg: "rgba(255,255,255,0.3)", noBtnColor: "#ffffff",
   },
 ];
 
@@ -785,7 +785,13 @@ async function initReceiverFlow() {
   if (existingStyle) existingStyle.remove();
   const styleTag = document.createElement("style");
   styleTag.id = "design-override";
-  styleTag.textContent = `.receiver-bg::before { background-image: url('${design.image}') !important; }`;
+  styleTag.textContent = `
+    .receiver-bg::before { background-image: url('${design.image}') !important; }
+    .receiver-card .eyebrow-dark { color: ${design.textColor} !important; text-shadow: 0 0 12px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8) !important; }
+    .receiver-card .receiver-heading { color: ${design.textColor} !important; text-shadow: 0 0 16px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.8) !important; font-size: clamp(1.1rem, 4.5vw, 1.5rem) !important; }
+    .yes-btn-card { background: ${design.btnBg} !important; color: ${design.btnColor} !important; }
+    .no-btn-card { background: ${design.noBtnBg} !important; color: ${design.noBtnColor} !important; border-color: ${design.noBtnColor} !important; }
+  `;
   document.head.appendChild(styleTag);
 
   // Position the card zone over the clear space in this design
@@ -793,19 +799,6 @@ async function initReceiverFlow() {
   receiverCard.style.left = design.left;
   receiverCard.style.right = design.right;
   receiverCard.style.bottom = design.bottom;
-
-  // Apply text and button colors for this design
-  receiverCard.style.setProperty("--text-color", design.textColor);
-  document.querySelector(".eyebrow-dark").style.color = design.textColor;
-  document.querySelector(".receiver-heading").style.color = design.textColor;
-
-  const yesBtn = document.querySelector(".yes-btn-card");
-  const noBtn = document.querySelector(".no-btn-card");
-  yesBtn.style.background = design.btnBg;
-  yesBtn.style.color = design.btnColor;
-  noBtn.style.background = design.noBtnBg;
-  noBtn.style.color = design.noBtnColor;
-  noBtn.style.borderColor = design.noBtnColor;
 
   // ── Invisible Spotify autoplay — set up URL, play after panel is shown ────
   const preferredSongUrl = proposal.songUrl || SPOTIFY_EMBED_SRC;
