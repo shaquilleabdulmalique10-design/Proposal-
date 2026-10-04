@@ -405,6 +405,10 @@ select option { background: #3d1a2e; color: #f5e6ec; }
   gap: 4px;
   overflow: hidden;
   max-width: 100%;
+  /* subtle overlay so text is always readable regardless of background */
+  background: rgba(255,255,255,0.15);
+  border-radius: 8px;
+  backdrop-filter: blur(2px);
 }
 
 .eyebrow-dark {
@@ -439,6 +443,7 @@ select option { background: #3d1a2e; color: #f5e6ec; }
   box-orient: vertical;
   overflow-wrap: break-word;
   word-break: break-word;
+  text-shadow: 0 1px 4px rgba(255,255,255,0.6);
 }
 
 .receiver-message {
